@@ -1,0 +1,12 @@
+.git
+.gitignore
+
+target/
+
+web/node_modules/
+web/dist/
+
+.env
+
+Dockerfile
+compose.yml
