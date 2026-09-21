@@ -3,8 +3,7 @@ use actix_web::{App, HttpServer, web};
 
 mod api;
 mod db;
-// mod entities;
-// mod models;
+pub mod structs;
 
 pub type Result<T> = anyhow::Result<T>;
 

@@ -1,38 +1,12 @@
 use actix_web::{HttpResponse, Responder, post, web};
-use utoipa::ToSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::{Value};
-use sqlx::{FromRow, PgPool, query_scalar, query};
+use sqlx::{PgPool, query_scalar, query};
 use uuid::Uuid;
 use chrono::Utc;
-
-// TODO: Move table structs in the corresponding file later
-#[derive(FromRow, ToSchema)]
-pub struct User {
-    id: Uuid,
-    mail: String,
-    name: String,
-    password_hash: String,
-    dashboard_map: Option<Value>,
-    created_at: u16 //Change later maybe
-
-}
-
-// TODO: Move request and response structs in the corresponding file later
-#[derive(Deserialize, ToSchema)]
-pub struct RegisterRequest {
-    pub mail: String,
-    pub name: String,
-    pub password_hash: String,
-    pub refresh_token_hash: String
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct MessageResponse {
-    pub message: String,
-}
-
-pub type RegisterResponse = MessageResponse;
+use crate::{
+    structs::{
+        requests::{RegisterRequest, RegisterResponse}
+    }
+};
 
 #[utoipa::path(
     post,

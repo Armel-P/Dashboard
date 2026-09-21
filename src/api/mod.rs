@@ -1,5 +1,10 @@
 use actix_web::web;
 use utoipa::OpenApi;
+use crate::{
+    structs::{
+        db, requests
+    }
+};
 
 mod about;
 mod auth;
@@ -22,8 +27,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     ),
     components(
         schemas(
-            auth::User,
-            auth::RegisterRequest, auth::RegisterResponse
+            db::User,
+            requests::RegisterRequest, requests::RegisterResponse
         )
     )
 )]
