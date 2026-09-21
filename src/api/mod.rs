@@ -9,6 +9,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")
         .service(about::about_json)
+        .configure(auth::configure)
         .configure(docs::configure)
     );
 }
@@ -16,10 +17,13 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        about::about_json
+        about::about_json,
+        auth::register,
     ),
     components(
         schemas(
+            auth::User,
+            auth::RegisterRequest, auth::RegisterResponse
         )
     )
 )]

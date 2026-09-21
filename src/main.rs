@@ -74,7 +74,10 @@ async fn main() -> Result<()> {
         Err(err) => { println!("Error: {}", err); return Err(anyhow!(err)) }
     };
 
-    let db_url = std::env::var("DATABASE_URL").expect("Error: Missing 'DATABASE_URL' env variable.");
+    let db_url = match std::env::var("DATABASE_URL") {
+        Ok(url) => url,
+        Err(err) => { println!("Error: {}", err); return Err(anyhow!(err)) }
+    };
 
     let db = db::connect(&db_url)
         .await
