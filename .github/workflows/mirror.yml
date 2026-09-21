@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Build Docker image
-        run: docker compose -f docker-compose.yml build
+        run: ./run
 
   check_repository:
     runs-on: ubuntu-latest
