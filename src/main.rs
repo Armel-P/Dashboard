@@ -1,9 +1,15 @@
 use actix_files::Files;
 use actix_web::{App, HttpServer, web};
+use sqlx::{Pool, Postgres};
 
 mod api;
-mod db;
+pub mod queries;
 pub mod structs;
+pub mod constants;
+mod db;
+pub mod middleware;
+pub mod password;
+pub mod utils;
 
 pub type Result<T> = anyhow::Result<T>;
 
@@ -60,10 +66,16 @@ async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
+    let jwt_key = match std::env::var("SECRET") {
+        Ok(s) => s.into_bytes(),
+        Err(err) => { println!("Error: {}", err); return Err(anyhow!(err)) }
+    };
+
     let mut addr = match std::env::var("SERVER_HOST") {
         Ok(host) => host,
         Err(err) => { println!("Error: {}", err); return Err(anyhow!(err)) }
     };
+
     let mut port = match std::env::var("SERVER_PORT") {
         Ok(port) => { match port.parse::<u16>() {
             Ok(port) => port,
@@ -78,7 +90,7 @@ async fn main() -> Result<()> {
         Err(err) => { println!("Error: {}", err); return Err(anyhow!(err)) }
     };
 
-    let db = db::connect(&db_url)
+    let db: Pool<Postgres> = db::connect(&db_url)
         .await
         .map_err(|e| anyhow::anyhow!("Error connecting to Database: {e}"))?;
 
@@ -89,6 +101,7 @@ async fn main() -> Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(db.clone()))
+            .app_data(web::Data::new(jwt_key.clone()))
             .configure(api::configure)
             .service(Files::new("/assets", "./web/dist/assets"))
             .default_service(web::route().to(spa))

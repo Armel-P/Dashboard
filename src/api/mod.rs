@@ -23,12 +23,15 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[openapi(
     paths(
         about::about_json,
-        auth::register,
+        auth::register, auth::login, auth::get_jwt, auth::disconnect
     ),
     components(
         schemas(
-            db::User,
-            requests::RegisterRequest, requests::RegisterResponse
+            db::User, db::RefreshToken,
+            requests::MessageResponse, requests::UserInfo,
+            requests::RegisterRequest, requests::RegisterResponse,
+            requests::LoginRequest, requests::LoginResponse,
+            requests::JwtResponse, requests::DisconnectResponse
         )
     )
 )]
