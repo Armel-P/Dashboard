@@ -1,0 +1,21 @@
+<header class="topbar">
+  <span class="brand">Dashboard</span>
+</header>
+
+<main class="hero">
+  <div class="card">
+    <h1>All your services, one screen.</h1>
+    <p class="lead">
+      Arrange widgets from different services on a single dashboard and make it yours.
+    </p>
+
+    <div class="actions">
+      @if (authenticated()) {
+        <a class="btn" routerLink="/dashboard">Open dashboard</a>
+      } @else {
+        <a class="btn" routerLink="/login">Log in</a>
+        <a class="btn secondary" routerLink="/register">Register</a>
+      }
+    </div>
+  </div>
+</main>

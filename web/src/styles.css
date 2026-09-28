@@ -1,3 +1,90 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
 
-@import 'tailwindcss';
+@theme inline {
+  --color-card: var(--card);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-danger: var(--error);
+  --color-line: var(--border);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-top: #0f0a19;
+  --bg-bottom: #191423;
+  --card: #1e1923;
+  --text: #c3cdd7;
+  --accent: #6e32b4;
+  --accent-hover: #8246be;
+  --error: #d24b50;
+  --on-accent: #f3eefa;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-top: #f0c896;
+  --bg-bottom: #e6dccd;
+  --card: #ebebeb;
+  --text: #3c3228;
+  --accent: #d2aa78;
+  --accent-hover: #c8a06e;
+  --error: #be4b41;
+  --on-accent: #3c3228;
+}
+
+:root {
+  --text-muted: color-mix(in srgb, var(--text) 60%, transparent);
+  --border: color-mix(in srgb, var(--text) 15%, transparent);
+  --radius: 8px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, var(--bg-top), var(--bg-bottom)) fixed;
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+}
+
+.card {
+  padding: 32px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+label { display: block; margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); }
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  margin: 6px 0 4px;
+  background: color-mix(in srgb, var(--text) 6%, var(--card));
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+}
+input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn:hover { background: var(--accent-hover); }
+
+.error { display: block; color: var(--error); font-size: 0.85rem; }
+a { color: var(--accent); }

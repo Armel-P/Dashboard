@@ -1,3 +1,5 @@
+pub const WEB_ROOT: &str = "./web/dist/web-angular/browser";
+
 pub const REFRESH_TOKEN_LIFETIME_DAYS: i64 = 30;
 pub const JWT_LIFETIME_DAYS: i64 = 1;
 

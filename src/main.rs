@@ -1,6 +1,9 @@
-use actix_files::Files;
-use actix_web::{App, HttpServer, web};
+use actix_files::{Files, NamedFile};
+use actix_web::{App, HttpServer, HttpResponse, web,
+                dev::{ServiceRequest, ServiceResponse, fn_service}};
 use sqlx::{Pool, Postgres};
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
+use anyhow::{anyhow};
 
 mod api;
 pub mod queries;
@@ -12,11 +15,6 @@ pub mod password;
 pub mod utils;
 
 pub type Result<T> = anyhow::Result<T>;
-
-use actix_files::NamedFile;
-use actix_web::HttpRequest;
-use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
-use anyhow::{anyhow};
 
 fn parse_args(addr: &mut String, port: &mut u16) -> Option<bool> {
     let mut args = std::env::args();
@@ -47,18 +45,17 @@ fn parse_args(addr: &mut String, port: &mut u16) -> Option<bool> {
     Some(false)
 }
 
-async fn spa(req: HttpRequest) -> actix_web::Result<NamedFile> {
-    let path = req.path();
+async fn spa_fallback(req: ServiceRequest) -> actix_web::Result<ServiceResponse> {
+    let (req, _) = req.into_parts();
 
-    if path.starts_with("/api/") {
-        return Err(actix_web::error::ErrorNotFound("not found"));
+    if req.path().starts_with("/api/") {
+        let res = HttpResponse::NotFound().finish();
+        return Ok(ServiceResponse::new(req, res));
     }
 
-    if path.starts_with("/public/") && let Some((_, p)) = path.trim_start_matches('/').split_once('/') {
-        return Ok(NamedFile::open(format!("./web/dist/{p}"))?);
-    }
-
-    Ok(NamedFile::open("./web/dist/index.html")?)
+    let file = NamedFile::open(format!("{}/index.html", constants::WEB_ROOT))?;
+    let res = file.into_response(&req);
+    Ok(ServiceResponse::new(req, res))
 }
 
 #[actix_web::main]
@@ -103,8 +100,11 @@ async fn main() -> Result<()> {
             .app_data(web::Data::new(db.clone()))
             .app_data(web::Data::new(jwt_key.clone()))
             .configure(api::configure)
-            .service(Files::new("/assets", "./web/dist/assets"))
-            .default_service(web::route().to(spa))
+            .service(
+                Files::new("/", constants::WEB_ROOT)
+                    .index_file("index.html")
+                    .default_handler(fn_service(spa_fallback)),
+            )
     });
 
     let bind = if ssl {

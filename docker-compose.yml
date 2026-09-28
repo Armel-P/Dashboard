@@ -6,10 +6,13 @@ services:
     container_name: dashboard
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - ${SERVER_PORT}:${SERVER_PORT}
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      RUST_LOG: info
+      SERVER_HOST: ${SERVER_HOST}
+      SERVER_PORT: ${SERVER_PORT}
+      SECRET: ${SECRET}
+      DATABASE_URL: postgres://dashboard:${POSTGRES_PASSWORD}@postgres:5432/dashboard
+      RUST_LOG: ${RUST_LOG}
     depends_on:
       postgres:
         condition: service_healthy
@@ -19,7 +22,7 @@ services:
     container_name: dashboard-postgres
     restart: unless-stopped
     ports:
-      - "${DATABASE_PORT}"
+      - ${DATABASE_PORT}:${DATABASE_PORT}
     environment:
       POSTGRES_USER: dashboard
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
