@@ -1,21 +1,118 @@
-<header class="topbar">
-  <span class="brand">Dashboard</span>
-</header>
+<main class="home">
 
-<main class="hero">
-  <div class="card">
-    <h1>All your services, one screen.</h1>
-    <p class="lead">
-      Arrange widgets from different services on a single dashboard and make it yours.
+  <section class="hero">
+    <p class="eyebrow">YOUR DASHBOARD</p>
+
+    <h1>
+      Everything you need,
+      <strong>in one place.</strong>
+    </h1>
+
+    <p class="hero-description">
+      Manage your projects, monitor your data, and keep everything
+      organized from a simple and powerful dashboard.
     </p>
 
-    <div class="actions">
-      @if (authenticated()) {
-        <a class="btn" routerLink="/dashboard">Open dashboard</a>
-      } @else {
-        <a class="btn" routerLink="/login">Log in</a>
-        <a class="btn secondary" routerLink="/register">Register</a>
-      }
+    <div class="hero-actions">
+      <a class="btn btn-primary" routerLink="/register">
+        Get Started
+      </a>
+
+      <a class="sign-in-link" routerLink="/login">
+        Already have an account? Sign In ->
+      </a>
     </div>
-  </div>
+  </section>
+
+  <section class="feature feature-main">
+    <div class="feature-content">
+      <p class="eyebrow">TRY IT OUT</p>
+
+      <h2>
+        Everything at a glance.
+      </h2>
+
+      <p>
+        Get a clear overview of what's happening and access the
+        information you need without digging through endless pages.
+      </p>
+
+      <a class="text-link" routerLink="/register">
+        Explore the dashboard ->
+      </a>
+    </div>
+
+    <div class="product-preview single-preview">
+      <img
+        src="img.jpg"
+        alt="Dashboard preview"
+      />
+    </div>
+
+  </section>
+
+  <section class="feature feature-showcase">
+
+    <div class="feature-content">
+      <p class="eyebrow">SEE IT IN ACTION</p>
+
+      <h2>
+        Built to make things simpler.
+      </h2>
+
+      <p>
+        A clean interface designed to give you the information you need,
+        exactly when you need it.
+      </p>
+    </div>
+
+
+    <div class="showcase">
+      <div class="screenshots">
+
+        <img
+          class="product-image image-one"
+          src="example-1.png"
+          alt="Dashboard screenshot"
+        />
+
+        <img
+          class="product-image image-two"
+          src="example-2.png"
+          alt="Dashboard screenshot"
+        />
+
+        <img
+          class="product-image image-three"
+          src="example-3.png"
+          alt="Dashboard screenshot"
+        />
+      </div>
+
+      <div class="demo-placeholder">
+        <img
+          src="example-demo.gif"
+          alt="Dashboard demonstration"
+        />
+      </div>
+
+    </div>
+
+  </section>
+
+  <section class="final-cta">
+    <p class="eyebrow">READY?</p>
+
+    <h2>
+      Give it a try.
+    </h2>
+
+    <p>
+      Start exploring your dashboard today.
+    </p>
+
+    <a class="btn btn-primary" routerLink="/register">
+      Get Started
+    </a>
+  </section>
 </main>

@@ -1,9 +1,16 @@
-<style>
+<header class="topbar">
+  <span class="brand">Dashboard</span>
 
-</style>
-
-<main class="main">
-
-</main>
+  <div class="theme-selector">
+    <select
+      [value]="themeService.currentTheme"
+      (change)="themeService.setTheme($any($event.target).value)"
+      aria-label="Select theme"
+    >
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+    </select>
+  </div>
+</header>
 
 <router-outlet />

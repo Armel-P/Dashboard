@@ -7,6 +7,20 @@
     <span class="error">Enter a valid email</span>
   }
 
+  @if (isRegister) {
+    <label for="name">Name</label>
+    <input
+      id="name"
+      type="text"
+      formControlName="name"
+      autocomplete="name"
+    />
+
+    @if (form.controls.name.touched && form.controls.name.invalid) {
+      <span class="error">Enter your name</span>
+    }
+  }
+
   <label for="password">Password</label>
   <input id="password" type="password" formControlName="password"
          [autocomplete]="isRegister ? 'new-password' : 'current-password'" />
@@ -15,14 +29,36 @@
   }
 
   @if (isRegister) {
-    <label for="confirm">Confirm password</label>
-    <input id="confirm" type="password" formControlName="confirmPassword" autocomplete="new-password" />
-    @if (form.controls.confirmPassword.touched && form.hasError('mismatch')) {
-      <span class="error">Passwords don't match</span>
+  <label for="confirmPassword">Confirm password</label>
+  <input
+    id="confirmPassword"
+    type="password"
+    formControlName="confirmPassword"
+    autocomplete="new-password"
+  />
+
+  @if (
+      form.controls.confirmPassword.touched &&
+      form.controls.confirmPassword.invalid
+    ) {
+      <span class="error">Please confirm your password</span>
+    }
+
+    @if (
+      form.controls.confirmPassword.touched &&
+      form.hasError('mismatch')
+    ) {
+      <span class="error">Passwords do not match</span>
     }
   }
 
-  <button class="btn" type="submit">{{ isRegister ? 'Register' : 'Log in' }}</button>
+  @if (errorMessage()) {
+    <span class="error">{{ errorMessage() }}</span>
+  }
+
+  <button class="btn" type="submit" [disabled]="loading()">
+    {{ loading() ? 'Please wait...' : (isRegister ? 'Register' : 'Log in') }}
+  </button>
 
   @if (isRegister) {
     <p>Already have an account? <a routerLink="/login">Log in</a></p>

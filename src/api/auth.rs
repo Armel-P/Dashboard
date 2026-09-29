@@ -6,7 +6,7 @@ use chrono::{Utc};
 use jsonwebtoken::{EncodingKey};
 use crate::{
     constants::{REFRESH_TOKEN_LIFETIME_DAYS},
-    password::{gen_token, hash_password, verify_password, gen_jwt},
+    password::{gen_token, hash_token, hash_password, verify_password, gen_jwt},
     structs::{
         db::{User},
         requests::{MessageResponse, UserInfo, RegisterRequest, RegisterResponse,
@@ -14,7 +14,7 @@ use crate::{
         },
     middleware::{jwt_auth},
     queries::{
-        users::{insert_user, find_user_by_mail},
+        users::{insert_user, find_user_by_id, find_user_by_mail},
         refresh_tokens::{insert_refresh_token, find_refresh_token, delete_refresh_token}
     },
     utils::{internal_err, build_refresh_token_cookie, remove_refresh_token_cookie}
@@ -198,6 +198,13 @@ pub async fn get_jwt(
         Err(_) => return internal_err("Failed to fetch refresh token")
     };
 
+    let user = match find_user_by_id(&mut tx, refresh_token.user_id).await {
+        Ok(Some(user_struct)) => user_struct,
+        Ok(None) => return HttpResponse::NotFound()
+            .json(MessageResponse { message: "User not found".to_string() }),
+        Err(_) => return internal_err("Failed to fetch user")
+    };
+
     if refresh_token.created_at + chrono::Duration::days(REFRESH_TOKEN_LIFETIME_DAYS) < Utc::now() {
         if let Err(_) = delete_refresh_token(&mut tx, token_id).await {
             return internal_err("Failed to delete expired refresh token");
@@ -208,19 +215,26 @@ pub async fn get_jwt(
         return HttpResponse::Unauthorized()
             .json(MessageResponse { message: "Refresh token expired".to_string() });
     }
-
-    match verify_password(&token, &refresh_token.token_hash) {
-        Ok(()) => {
-            let jwt = match gen_jwt(refresh_token.id.to_string(), &EncodingKey::from_secret(secret.as_ref())) {
-                Ok(token) => token,
-                Err(_) => return internal_err("Failed to generate JWT")
-            };
-
-            HttpResponse::Ok().json(JwtResponse { access_token: jwt })
-        },
-        Err(_) => HttpResponse::Unauthorized()
-            .json(MessageResponse { message: "Invalid refresh token".to_string() })
+    if hash_token(&token) != refresh_token.token_hash {
+        return HttpResponse::Unauthorized()
+            .json(MessageResponse {
+                message: "Invalid refresh token".to_string(),
+            });
     }
+
+    let jwt = match gen_jwt(refresh_token.id.to_string(), &EncodingKey::from_secret(secret.as_ref())) {
+        Ok(token) => token,
+        Err(_) => return internal_err("Failed to generate JWT")
+    };
+
+    HttpResponse::Ok().json(JwtResponse { 
+        access_token: jwt,
+        user: UserInfo {
+            id: user.id,
+            mail: user.mail,
+            name: user.name,
+        },
+    })
 }
 
 #[utoipa::path(

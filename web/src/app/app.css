@@ -1,0 +1,52 @@
+.topbar {
+  padding: 20px 32px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.8rem;
+  letter-spacing: 0.02em;
+}
+.theme-selector {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0;
+
+  background: var(--accent);
+  color: var(--on-accent);
+
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+
+  overflow: hidden;
+}
+
+.theme-selector select {
+  border: none;
+  outline: none;
+
+  padding: 0.55rem 0.8rem;
+
+  background: var(--accent);
+  color: var(--on-accent);
+
+  font: inherit;
+  cursor: pointer;
+}
+
+.theme-selector select:hover {
+  background: var(--accent-hover);
+}
+
+.theme-selector option {
+  background: var(--card);
+  color: var(--text);
+}

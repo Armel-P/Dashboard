@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '../auth.service';
 
 @Component({
-  imports: [],
   selector: 'app-dashboard',
-  styleUrl: './dashboard.css',
+  imports: [],
   templateUrl: './dashboard.html',
+  styleUrl: './dashboard.css',
 })
-export class Dashboard {}
+export class Dashboard {
+  readonly auth = inject(AuthService);
+}

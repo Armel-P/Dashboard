@@ -33,6 +33,15 @@ pub async fn insert_user(
     Ok(user)
 }
 
+pub async fn find_user_by_id(
+    conn: &mut PgConnection,
+    id: Uuid,
+) -> Result<Option<User>, sqlx::Error> {
+    query_as!(User, r#"SELECT * FROM users WHERE id = $1 LIMIT 1"#, id)
+        .fetch_optional(conn)
+        .await
+}
+
 pub async fn find_user_by_mail(
     conn: &mut PgConnection,
     mail: String,

@@ -34,9 +34,7 @@ pub struct LoginRequest {
 }
 pub type LoginResponse = TokenResponse;
 
-#[derive(Serialize, ToSchema)]
-pub struct JwtResponse {
-    pub access_token: String
-}
+
+pub type JwtResponse = TokenResponse;
 
 pub type DisconnectResponse = MessageResponse;
