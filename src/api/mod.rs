@@ -9,6 +9,7 @@ use crate::{
 mod about;
 mod auth;
 mod docs;
+mod health;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -16,6 +17,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(about::about_json)
         .configure(auth::configure)
         .configure(docs::configure)
+        .service(health::health)
     );
 }
 
@@ -23,7 +25,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[openapi(
     paths(
         about::about_json,
-        auth::register, auth::login, auth::get_jwt, auth::disconnect
+        auth::register, auth::login, auth::get_jwt, auth::disconnect,
+        health::health
     ),
     components(
         schemas(
