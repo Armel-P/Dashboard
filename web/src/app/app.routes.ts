@@ -3,6 +3,7 @@ import { guestGuard, authGuard } from './auth.guards';
 import { Home } from './home/home';
 import { Auth, AuthMode } from './auth/auth';
 import { Dashboard } from './dashboard/dashboard';
+import { Profile } from './profile/profile';
 
 export const routes: Routes = [
   {
@@ -26,6 +27,11 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: Dashboard,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'profile',
+    component: Profile,
     canActivate: [authGuard],
   },
   {

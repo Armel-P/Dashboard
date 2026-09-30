@@ -1,11 +1,12 @@
-<h1>
-  Welcome, {{ auth.user()?.name }}!
-</h1>
+<!-- <gridstack [options]="gridOptions" (changeCB)="onChange($event)">
+  @for (w of store.widgets(); track w.id) {
+    <gridstack-item [options]="{ id: w.id, x: w.x, y: w.y, w: w.w, h: w.h }">
+      <div class="widget">
+        <button class="remove" (click)="store.remove(w.id)">×</button>
+        <ng-container *ngComponentOutlet="componentFor(w.type)" />
+      </div>
+    </gridstack-item>
+  }
+</gridstack>
 
-<p>
-  Logged in as {{ auth.user()?.mail }}
-</p>
-
-<p>
-  Your ID: {{ auth.user()?.id }}
-</p>
+@if (store.pickerOpen()) { <app-widget-picker /> }-->

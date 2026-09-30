@@ -1,92 +1,28 @@
-import { Component, Injectable, inject } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { RouterLink, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { filter, map } from 'rxjs';
+import { ThemeService } from './theme.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from './auth.service';
-
-export enum Theme {
-  Light = 'light',
-  Dark = 'dark'
-}
-
-const themes = {
-  [Theme.Light]: {
-    favicon: 'dashboard.ico'
-    // logo: 'assets/images/logo-light.svg'
-  },
-
-  [Theme.Dark]: {
-    favicon: 'dashboard.ico'
-    // logo: 'assets/images/logo-dark.svg'
-  }
-};
-
-@Injectable({
-  providedIn: 'root'
-})
-export class ThemeService {
-  private readonly document = inject(DOCUMENT);
-  private readonly storageKey = 'theme';
-
-  constructor() {
-    const savedTheme = localStorage.getItem(this.storageKey) as Theme | null;
-
-    if (savedTheme === Theme.Light || savedTheme === Theme.Dark) {
-      this.setTheme(savedTheme);
-    } else {
-      this.setTheme(Theme.Dark);
-    }
-  }
-
-  get currentTheme(): Theme {
-    return (
-      this.document.documentElement.dataset['theme'] as Theme
-    ) || Theme.Dark;
-  }
-
-  setTheme(theme: Theme): void {
-    this.document.documentElement.dataset['theme'] = theme;
-
-    localStorage.setItem(this.storageKey, theme);
-
-    this.updateFavicon(theme);
-  }
-
-  toggle(): void {
-    this.setTheme(
-      this.currentTheme === Theme.Dark
-        ? Theme.Light
-        : Theme.Dark
-    );
-  }
-
-  private updateFavicon(theme: Theme): void {
-    let link = this.document.querySelector<HTMLLinkElement>(
-      'link[rel="icon"]'
-    );
-
-    if (!link) {
-      link = this.document.createElement('link');
-
-      link.rel = 'icon';
-
-      this.document.head.appendChild(link);
-    }
-
-    link.href = themes[theme].favicon;
-  }
-}
 
 @Component({
   selector: 'app-root',
-  imports: [
-    RouterOutlet
-  ],
+  imports: [RouterLink, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
+  protected readonly authService = inject(AuthService);
   protected readonly themeService = inject(ThemeService);
-  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  protected readonly isDashboard = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects.startsWith('/dashboard')),
+    ),
+    { initialValue: false },
+  );
 
   constructor() {
     this.authService.initialize();

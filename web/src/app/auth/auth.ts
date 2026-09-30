@@ -31,8 +31,7 @@ export class Auth {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
 
-  readonly mode: AuthMode =
-    this.route.snapshot.data['mode'] ?? AuthMode.Login;
+  readonly mode: AuthMode = this.route.snapshot.data['mode'] ?? AuthMode.Login;
 
   readonly isRegister = this.mode === AuthMode.Register;
 

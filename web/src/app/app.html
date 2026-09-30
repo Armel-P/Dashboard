@@ -1,15 +1,26 @@
 <header class="topbar">
-  <span class="brand">Dashboard</span>
+  <a class="brand" routerLink="">Dashboard</a>
 
-  <div class="theme-selector">
-    <select
-      [value]="themeService.currentTheme"
-      (change)="themeService.setTheme($any($event.target).value)"
-      aria-label="Select theme"
-    >
-      <option value="dark">Dark</option>
-      <option value="light">Light</option>
-    </select>
+  <div class="actions">
+    @if (isDashboard()) {
+      <button class="btn">+ Add widget</button>
+    }
+
+    <div class="theme-selector">
+      <select [value]="themeService.currentTheme"
+              (change)="themeService.setTheme($any($event.target).value)"
+              aria-label="Select theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+
+    @if (authService.isAuthenticated) {
+      <a routerLink="/profile" class="account">
+        <span class="avatar">{{ authService.user()?.name?.[0] }}</span>
+        <span>{{ authService.user()?.name }}</span>
+      </a>
+    }
   </div>
 </header>
 
