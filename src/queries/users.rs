@@ -1,6 +1,7 @@
 use chrono::{Utc};
 use sqlx::{query, query_as, PgConnection};
 use uuid::Uuid;
+use serde_json::Value;
 
 use crate::structs::db::{User};
 
@@ -31,6 +32,27 @@ pub async fn insert_user(
     .execute(conn)
     .await?;
     Ok(user)
+}
+
+pub async fn map_update(
+    conn: &mut PgConnection,
+    id: Uuid,
+    map: Value,
+) -> Result<(), sqlx::Error> {
+    query!(r#"UPDATE users SET dashboard_map = $1 WHERE id = $2"#, map, id)
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
+pub async fn delete_user(
+    conn: &mut PgConnection,
+    id: Uuid,
+) -> Result<(), sqlx::Error> {
+    query!(r#"DELETE FROM users WHERE id = $1"#, id)
+        .fetch_optional(conn)
+        .await?;
+    Ok(())
 }
 
 pub async fn find_user_by_id(

@@ -284,10 +284,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(login)
         .service(get_jwt)
         .service(
-                web::scope("")
-                    .wrap(from_fn(jwt_auth))
-                    .service(disconnect),
-            ),
+            web::scope("")
+                .wrap(from_fn(jwt_auth))
+                .service(disconnect),
+        ),
 
     );
 }

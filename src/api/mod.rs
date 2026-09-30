@@ -10,6 +10,8 @@ mod about;
 mod auth;
 mod docs;
 mod health;
+mod user;
+mod widget;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -18,6 +20,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .configure(auth::configure)
         .configure(docs::configure)
         .service(health::health)
+        .configure(user::configure)
+        .service(widget::get_widget)
     );
 }
 
@@ -26,7 +30,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     paths(
         about::about_json,
         auth::register, auth::login, auth::get_jwt, auth::disconnect,
-        health::health
+        health::health,
+        user::delete, user::update_map
     ),
     components(
         schemas(
@@ -34,7 +39,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             requests::MessageResponse, requests::UserInfo,
             requests::RegisterRequest, requests::RegisterResponse,
             requests::LoginRequest, requests::LoginResponse,
-            requests::JwtResponse, requests::DisconnectResponse
+            requests::JwtResponse, requests::DisconnectResponse,
+            requests::DeleteResponse,
+            requests::UpdateMapRequest, requests::UpdateMapResponse
         )
     )
 )]

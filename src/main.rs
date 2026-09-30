@@ -4,6 +4,7 @@ use actix_web::{App, HttpServer, HttpResponse, web,
 use sqlx::{Pool, Postgres};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use anyhow::{anyhow};
+use reqwest::Client;
 
 mod api;
 pub mod queries;
@@ -13,6 +14,9 @@ mod db;
 pub mod middleware;
 pub mod password;
 pub mod utils;
+pub mod services;
+
+use services::registery::Registry;
 
 pub type Result<T> = anyhow::Result<T>;
 
@@ -99,6 +103,8 @@ async fn main() -> Result<()> {
         App::new()
             .app_data(web::Data::new(db.clone()))
             .app_data(web::Data::new(jwt_key.clone()))
+            .app_data(web::Data::new(Registry::new()))
+            .app_data(web::Data::new(Client::new()))
             .configure(api::configure)
             .service(
                 Files::new("/", constants::WEB_ROOT)

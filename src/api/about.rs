@@ -1,9 +1,11 @@
-use actix_web::{HttpResponse, Responder, get,
-    dev::{ConnectionInfo}
-};
+use actix_web::{HttpResponse, Responder, dev::ConnectionInfo, get, web};
 use utoipa;
 use serde_json::json;
 use chrono::Utc;
+
+use crate::{
+    services::registery::Registry,
+};
 
 #[utoipa::path(
     get,
@@ -14,24 +16,15 @@ use chrono::Utc;
     )
 )]
 #[get("/about.json")]
-async fn about_json(conn: ConnectionInfo) -> impl Responder {
-    let about = json!({
-        "client": {
-            "host": conn.host(),
-        },
+async fn about_json(
+    conn: ConnectionInfo,
+    registry: web::Data<Registry>
+) -> impl Responder {
+    HttpResponse::Ok().json(json!({
+        "client": { "host": conn.host() },
         "server": {
             "current_time": Utc::now().timestamp(),
-            "services": [
-                // Later when services enum implemanted, make a func to loop in the enum
-            ]
+            "services": registry.all().map(|s| s.describe()).collect::<Vec<_>>(),
         },
-    });
-    match serde_json::to_string(&about) {
-        Ok(json) => HttpResponse::Ok()
-            .content_type("application/json")
-            .body(json),
-
-        Err(err) => HttpResponse::InternalServerError()
-            .body(format!("Failed to generate about.json file: {err}")),
-    }
+    }))
 }

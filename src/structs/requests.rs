@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
+use serde_json::Value;
 
 #[derive(Serialize, ToSchema)]
 pub struct MessageResponse {
@@ -38,3 +39,11 @@ pub type LoginResponse = TokenResponse;
 pub type JwtResponse = TokenResponse;
 
 pub type DisconnectResponse = MessageResponse;
+
+pub type DeleteResponse = MessageResponse;
+
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateMapRequest {
+    pub map: Value
+}
+pub type UpdateMapResponse = MessageResponse;
