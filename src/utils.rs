@@ -28,5 +28,7 @@ pub fn remove_refresh_token_cookie() -> Cookie<'static> {
     .path(COOKIE_PATH)
     .max_age(Duration::ZERO)
     .http_only(true)
+    .same_site(SameSite::Strict)
+    .secure(true)
     .finish()
 }

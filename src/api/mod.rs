@@ -21,7 +21,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .configure(docs::configure)
         .service(health::health)
         .configure(user::configure)
-        .service(widget::get_widget)
+        .configure(widget::configure)
     );
 }
 

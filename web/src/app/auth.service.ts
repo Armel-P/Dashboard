@@ -14,6 +14,10 @@ export interface AuthResponse {
   user: UserInfo;
 }
 
+export interface MessageResponse {
+  message: string;
+}
+
 export interface LoginRequest {
   mail: string;
   password: string;
@@ -71,6 +75,32 @@ export class AuthService {
           this._user.set(user);
         }),
       );
+  }
+
+  disconnect(): Observable<MessageResponse> {
+    return this.http
+      .post<MessageResponse>(
+      `${API_BASE}/auth/disconnect`,
+      {},
+    )
+    .pipe(
+        tap(({}) => {
+          this._token.set(null);
+        }),
+    );
+  }
+
+  deleteAccount(): Observable<MessageResponse> {
+    return this.http
+      .post<MessageResponse>(
+      `${API_BASE}/user/delete`,
+      {},
+    )
+    .pipe(
+        tap(({}) => {
+          this._token.set(null);
+        }),
+    );
   }
 
   initialize(): Observable<AuthResponse | null> {

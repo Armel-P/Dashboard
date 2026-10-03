@@ -47,3 +47,14 @@ pub struct UpdateMapRequest {
     pub map: Value
 }
 pub type UpdateMapResponse = MessageResponse;
+
+#[derive(Deserialize)]
+pub struct GetCatalogtUrlInfo {
+    pub service: String,
+}
+
+#[derive(Deserialize)]
+pub struct GetWidgetUrlInfo {
+    pub service: String,
+    pub widget_id: String
+}

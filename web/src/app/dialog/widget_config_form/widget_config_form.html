@@ -1,0 +1,70 @@
+<div class="params-grid">
+  @for (p of widget().params; track p.name) {
+    <label class="field">
+      <span class="field-label">
+        {{ p.name }}
+        @if (p.optional) {
+          <span class="optional">(optional)</span>
+        }
+      </span>
+
+      @if (p.enum?.length) {
+        <select
+          [required]="!p.optional"
+          (change)="setValue(p, $any($event.target).value)"
+        >
+          @if (p.optional) {
+            <option value="" [selected]="values()[p.name] === undefined">
+              (default)
+            </option>
+          }
+          @for (opt of p.enum; track opt) {
+            <option [value]="opt" [selected]="values()[p.name] === opt">
+              {{ opt }}
+            </option>
+          }
+        </select>
+      } @else if (p.type === 'string') {
+        <input
+          type="text"
+          [required]="!p.optional"
+          [placeholder]="p.default != null ? '' + p.default : ''"
+          [value]="values()[p.name] ?? ''"
+          (input)="setValue(p, $any($event.target).value)"
+        />
+      } @else {
+        <input
+          type="number"
+          [required]="!p.optional"
+          [attr.min]="p.minimum ?? null"
+          [attr.max]="p.maximum ?? null"
+          [attr.step]="p.type === 'integer' ? 1 : 'any'"
+          [placeholder]="p.default != null ? '' + p.default : ''"
+          [value]="values()[p.name] ?? ''"
+          (input)="setValue(p, $any($event.target).value)"
+        />
+      }
+    </label>
+  }
+
+  <div class="field refresh">
+    <span class="field-label">Refresh every</span>
+
+    <div class="refresh-input">
+      <input
+        type="number"
+        min="1"
+        [value]="refreshValue()"
+        (input)="setRefreshValue($any($event.target).value)"
+      />
+
+      <select (change)="setRefreshUnit($any($event.target).value)">
+        @for (u of refreshUnits; track u.value) {
+          <option [value]="u.value" [selected]="u.value === refreshUnit()">
+            {{ u.label }}
+          </option>
+        }
+      </select>
+    </div>
+  </div>
+</div>

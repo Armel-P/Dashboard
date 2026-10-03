@@ -199,20 +199,33 @@ impl Service for OpenMeteo {
         })
     }
 
+    fn describe_catalog(&self) -> Value {
+        json!({
+            "name": self.name(),
+            "label": "Weather",
+            "auth": self.auth(),
+            "widgets": self.widgets().into_iter().map(|w| json!({
+                "id": w.id,
+                "name": w.name,
+                "description": w.description,
+                "params": w.params_schema,
+            })).collect::<Vec<_>>()
+        })
+    }
+
     fn widgets(&self) -> Vec<WidgetSpec> {
         let location_schema: Vec<ParamSpec> = vec![
             ParamSpec { name: "city", param_type: "string", ..Default::default() },
-            ParamSpec { name: "latitude", param_type: "number", ..Default::default()},
-            ParamSpec { name: "longitude", param_type: "number", ..Default::default() },
-            ParamSpec { name: "units", param_type: "string",
-                options: Some(vec!["celsius", "fahrenheit"]), default: Some(json!("celsius")),
-                ..Default::default() },
+            ParamSpec { name: "units", param_type: "string", options: Some(vec!["celsius", "fahrenheit"]),
+                default: Some(json!("celsius")), ..Default::default() },
+            ParamSpec { name: "latitude", param_type: "number", optional: true, ..Default::default()},
+            ParamSpec { name: "longitude", param_type: "number", optional: true, ..Default::default() },
         ];
 
         let mut forecast_schema = location_schema.clone();
         forecast_schema.push(
-            ParamSpec { name: "days", param_type: "integer", options: None,
-                minimum: Some(1), maximum: Some(16), default: Some(json!(5)) }
+            ParamSpec { name: "days", param_type: "integer", optional: false,
+                options: None, minimum: Some(1), maximum: Some(16), default: Some(json!(5)) }
         );
 
         vec![
@@ -220,15 +233,13 @@ impl Service for OpenMeteo {
                 id: "current",
                 name: "Current weather",
                 description: "Temperature, feels-like and wind for a location.",
-                params_schema: location_schema,
-                refresh_secs: 600,
+                params_schema: location_schema
             },
             WidgetSpec {
                 id: "forecast",
                 name: "Daily forecast",
                 description: "Min/max temperature and rain for the next days.",
-                params_schema: forecast_schema,
-                refresh_secs: 3600,
+                params_schema: forecast_schema
             },
         ]
     }

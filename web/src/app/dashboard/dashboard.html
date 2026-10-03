@@ -1,12 +1,40 @@
-<!-- <gridstack [options]="gridOptions" (changeCB)="onChange($event)">
-  @for (w of store.widgets(); track w.id) {
-    <gridstack-item [options]="{ id: w.id, x: w.x, y: w.y, w: w.w, h: w.h }">
-      <div class="widget">
-        <button class="remove" (click)="store.remove(w.id)">×</button>
-        <ng-container *ngComponentOutlet="componentFor(w.type)" />
+<div #grid class="grid-stack dashboard">
+  @for (w of widgets(); track w.uid) {
+    <div
+      class="grid-stack-item"
+      [attr.gs-id]="w.uid"
+      [attr.gs-x]="w.x"
+      [attr.gs-y]="w.y"
+      [attr.gs-w]="w.w"
+      [attr.gs-h]="w.h"
+    >
+      <div class="grid-stack-item-content">
+        <ng-container
+          *ngComponentOutlet="
+            componentFor(w);
+            inputs: {
+              params: w.params,
+              refreshSecs: w.refreshSecs,
+              onModify: () => openModify(w.uid)
+            }
+          "
+        />
       </div>
-    </gridstack-item>
+    </div>
   }
-</gridstack>
+</div>
 
-@if (store.pickerOpen()) { <app-widget-picker /> }-->
+@if (ui.addOpen()) {
+  <app-add-widget-dialog
+    (added)="add($event)"
+    (closed)="ui.addOpen.set(false)"
+  />
+}
+@if (editingWidget(); as widget) {
+  <app-modify-widget-dialog
+    [instance]="widget"
+    (saved)="modify($event)"
+    (deleted)="deleteFromDialog($event)"
+    (closed)="closeModify()"
+  />
+}

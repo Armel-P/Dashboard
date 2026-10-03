@@ -1,11 +1,18 @@
-use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder, web, post, put,
+use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder, web, post, put, get,
                 middleware::from_fn};
 use sqlx::{PgPool};
 use uuid::Uuid;
+
 use crate::{
-    structs::requests::{MessageResponse, DeleteResponse, UpdateMapRequest, UpdateMapResponse},
+    structs::{
+        requests::{MessageResponse, DeleteResponse, UpdateMapRequest, UpdateMapResponse},
+        records::MapRecord,
+    },
     utils::{internal_err, remove_refresh_token_cookie},
-    queries::{refresh_tokens::{find_refresh_token}, users::{delete_user, map_update}},
+    queries::{
+        refresh_tokens::{find_refresh_token}, 
+        users::{delete_user, map_update, map_get}
+    },
     middleware::{jwt_auth}
 };
 
@@ -13,7 +20,7 @@ use crate::{
     post,
     path = "/api/user/delete",
     responses(
-        (status = 204, description = "Successfully deleted", content_type = "application/json", body = DeleteResponse),
+        (status = 200, description = "Successfully deleted", content_type = "application/json", body = DeleteResponse),
         (status = 401, description = "Invalid bearer token", content_type = "application/json", body = MessageResponse),
         (status = 500, description = "Internal server error", content_type = "application/json", body = MessageResponse)
     ),
@@ -61,7 +68,7 @@ pub async fn delete(
     path = "/api/user/update-map",
     request_body = UpdateMapRequest,
     responses(
-        (status = 204, description = "Successfully updated", content_type = "application/json", body = UpdateMapResponse),
+        (status = 200, description = "Successfully updated", content_type = "application/json", body = UpdateMapResponse),
         (status = 401, description = "Invalid bearer token", content_type = "application/json", body = MessageResponse),
         (status = 500, description = "Internal server error", content_type = "application/json", body = MessageResponse)
     ),
@@ -102,11 +109,55 @@ pub async fn update_map(
         .json(UpdateMapResponse { message: "Map successfully updated".to_string() })
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/user/get-map",
+    responses(
+        (status = 200, description = "Successfully retrieve", content_type = "application/json"),
+        (status = 401, description = "Invalid bearer token", content_type = "application/json", body = MessageResponse),
+        (status = 404, description = "No map", content_type = "application/json", body = MessageResponse),
+        (status = 500, description = "Internal server error", content_type = "application/json", body = MessageResponse)
+    ),
+    security(("bearer_auth" = []))
+)]
+#[get("/get-map")]
+pub async fn get_map(
+    req: HttpRequest,
+    db: web::Data<PgPool>
+) -> impl Responder {
+    let token_id = match req.extensions().get::<Uuid>() {
+        Some(id) => *id,
+        None => return internal_err("Middleware failed")
+    };
+
+    let mut tx = match db.begin().await {
+        Ok(tx) => tx,
+        Err(error) => return internal_err(&error.to_string()),
+    };
+
+    let refresh_token = match find_refresh_token(&mut tx, token_id).await {
+        Ok(Some(token_struct)) => token_struct,
+        Ok(None) => return HttpResponse::NotFound()
+            .json(MessageResponse { message: "Refresh token not found".to_string() }),
+        Err(_) => return internal_err("Failed to fetch refresh token")
+    };
+
+    let map_record: MapRecord = match map_get(&mut tx, refresh_token.user_id).await {
+        Ok(Some(map)) => map,
+        Ok(None) => return HttpResponse::NotFound()
+            .json(MessageResponse { message: "Not any map saved yet".to_string() }),
+        Err(_) => return internal_err("Failed to retrieve map")
+    };
+
+    HttpResponse::Ok().json(map_record.dashboard_map)
+}
+
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/user")
             .wrap(from_fn(jwt_auth))
             .service(delete)
-            .service(update_map),
+            .service(update_map)
+            .service(get_map),
     );
 }

@@ -6,7 +6,7 @@ use actix_web::{
     error::{ErrorUnauthorized, ErrorInternalServerError},
     web, Error, HttpMessage
 };
-use jsonwebtoken::DecodingKey;
+use jsonwebtoken::{DecodingKey};
 use uuid::Uuid;
 
 use crate::{
@@ -40,7 +40,7 @@ pub async fn jwt_auth<B: MessageBody + 'static>(
  
     let claims: Claims = match verify_jwt(token, &DecodingKey::from_secret(secret.as_ref())) {
         Ok(claims) => claims,
-        Err(_) => return Err(ErrorUnauthorized("Wrong JWT"))
+        Err(_) => return Err(ErrorUnauthorized("Wrong JWT he"))
     };
 
     let token_id = match Uuid::parse_str(claims.sub.as_str()) {

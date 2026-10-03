@@ -1,1 +1,82 @@
-<p>profile works!</p>
+<div class="profile-page">
+  <div class="profile-header">
+    <h1>Profile</h1>
+    <p>Manage your account and connected services.</p>
+  </div>
+
+  <div class="profile-grid">
+    <section class="profile-section account-section">
+      <h2>Account</h2>
+
+      <div class="field">
+        <span class="field-label">Name</span>
+        <span class="field-value">
+          {{ auth.user()?.name }}
+        </span>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Email</span>
+        <span class="field-value">
+          {{ auth.user()?.mail }}
+        </span>
+      </div>
+
+      <div class="account-actions">
+        <button type="button" class="btn disconnect-btn" (click)="disconnect()" [disabled]="loading()">
+          {{ loading() ? 'Disconnecting...' : 'Disconnect' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="profile-section services-section">
+      <h2>Connected services</h2>
+      <p class="section-description">
+        Connect your accounts to use their services in your dashboard.
+      </p>
+
+      <div class="services-list">
+        <div class="service">
+          <div>
+            <strong>Spotify</strong>
+            <span>Not connected</span>
+          </div>
+
+          <button type="button" class="btn">
+            Connect
+          </button>
+        </div>
+
+        <div class="service">
+          <div>
+            <strong>GitHub</strong>
+            <span>Not connected</span>
+          </div>
+
+          <button type="button" class="btn">
+            Connect
+          </button>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <section class="danger-zone">
+    <div class="danger-content">
+      <h2>Delete account</h2>
+      <p>
+        Permanently delete your account and all associated data.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn delete-btn"
+      (click)="deleteAccount()"
+      [disabled]="loading()"
+    >
+      {{ loading() ? 'Deleting...' : 'Delete account' }}
+    </button>
+  </section>
+</div>

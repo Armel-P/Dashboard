@@ -4,7 +4,7 @@ use argon2::{Argon2, PasswordHasher, PasswordHash, PasswordVerifier,
 use rand::fill;
 use hex::encode;
 use sha2::{Digest, Sha256};
-use jsonwebtoken::{Header, EncodingKey, DecodingKey};
+use jsonwebtoken::{Header, EncodingKey, DecodingKey, Validation};
 use chrono::{Utc, Duration};
 use crate::{
     structs::{encrypt::Claims},
@@ -55,10 +55,13 @@ pub fn gen_jwt(token_id: String, secret: &EncodingKey) -> Result<String, jsonweb
 }
 
 pub fn verify_jwt(token: &str, secret: &DecodingKey) -> Result<Claims, jsonwebtoken::errors::Error> {
+    let mut validation = Validation::default();
+    validation.set_audience(&[API_URL.to_string()]);
+
     match jsonwebtoken::decode::<Claims>(
         token,
         secret,
-        &jsonwebtoken::Validation::default()
+        &validation
     ) {
         Ok(token_data) => Ok(token_data.claims),
         Err(err) => Err(err)

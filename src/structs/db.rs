@@ -3,6 +3,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 use serde_json::Value;
 use chrono::{DateTime, Utc};
+
 #[derive(FromRow, ToSchema)]
 pub struct User {
     pub id: Uuid,

@@ -1,0 +1,161 @@
+.weather-widget {
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background: var(--card);
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.widget-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.widget-title h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.widget-title span {
+  display: block;
+  margin-top: 0.25rem;
+  opacity: 0.65;
+  font-size: 0.85rem;
+}
+
+.settings-button {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: 1px solid var(--border);
+  border-radius: 6px;
+
+  background: transparent;
+  color: var(--text);
+
+  font-size: 1rem;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.settings-button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.weather-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.location {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  margin-bottom: 0.2rem;
+}
+
+.place {
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.country {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.temperature-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.temperature {
+  font-size: 3.5rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.unit {
+  margin-top: 0.15rem;
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+.weather-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.7rem;
+  background: var(--bg-bottom);
+  border-radius: 6px;
+}
+
+.label {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.state {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.state.error {
+  color: var(--error);
+}
+
+.retry {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+
+.retry:hover {
+  background: var(--accent-hover);
+}

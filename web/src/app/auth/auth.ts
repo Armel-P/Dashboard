@@ -40,7 +40,7 @@ export class Auth {
 
   form = this.fb.nonNullable.group(
     {
-      name: ['', this.isRegister ? [Validators.required] : []],
+      name: ['', this.isRegister ? [Validators.required, Validators.pattern('^[a-zA-Z]+[ ]+[a-zA-Z]+$')] : []],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: [

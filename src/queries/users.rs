@@ -3,7 +3,10 @@ use sqlx::{query, query_as, PgConnection};
 use uuid::Uuid;
 use serde_json::Value;
 
-use crate::structs::db::{User};
+use crate::structs::{
+    db::{User},
+    records::{MapRecord, IdRecord},
+};
 
 pub async fn insert_user(
     conn: &mut PgConnection,
@@ -45,6 +48,19 @@ pub async fn map_update(
     Ok(())
 }
 
+pub async fn map_get(
+    conn: &mut PgConnection,
+    id: Uuid,
+) -> Result<Option<MapRecord>, sqlx::Error> {
+    query_as!(
+        MapRecord,
+        r#"SELECT dashboard_map FROM users WHERE id = $1 LIMIT 1"#,
+        id
+    )
+    .fetch_optional(conn)
+    .await
+}
+
 pub async fn delete_user(
     conn: &mut PgConnection,
     id: Uuid,
@@ -75,8 +91,8 @@ pub async fn find_user_by_mail(
 
 pub async fn user_exists(conn: &mut PgConnection, id: Uuid) -> Result<bool, sqlx::Error> {
     let found = query_as!(
-        User,
-        r#"SELECT * FROM users WHERE id = $1 LIMIT 1"#,
+        IdRecord,
+        r#"SELECT id FROM users WHERE id = $1 LIMIT 1"#,
         id
     )
     .fetch_optional(conn)

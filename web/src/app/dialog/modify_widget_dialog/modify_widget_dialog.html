@@ -1,0 +1,59 @@
+<dialog
+  #dlg
+  class="widget-dialog"
+  (close)="closed.emit()"
+  (click)="onBackdropClick($event)"
+>
+  <div class="dialog-body" (mousedown)="startDrag($event)">
+
+    <div class="dialog-header">
+      <button
+        type="button"
+        class="btn btn-secondary dialog-icon-btn"
+        (click)="toggleLocked()"
+        [attr.aria-label]="locked() ? 'Unlock widget' : 'Lock widget'"
+      >
+        {{ locked() ? 'Lock' : 'Open' }}
+      </button>
+
+      <h2 class="dialog-title">Modify widget</h2>
+
+      <button
+        type="button"
+        class="btn btn-danger dialog-icon-btn"
+        (click)="delete()"
+        aria-label="Delete widget"
+      >
+        X
+      </button>
+    </div>
+
+    @if (widget(); as w) {
+      <app-widget-config-form
+        [widget]="w"
+        [initialValues]="instance().params"
+        [initialRefreshSecs]="instance().refreshSecs"
+        (changed)="configChanged($event)"
+      />
+    }
+
+    <div class="actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="close()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="confirm()"
+      >
+        Save
+      </button>
+    </div>
+
+  </div>
+</dialog>

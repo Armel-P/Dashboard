@@ -3,7 +3,9 @@ import { RouterLink, RouterOutlet, Router, NavigationEnd } from '@angular/router
 import { filter, map } from 'rxjs';
 import { ThemeService } from './theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+
 import { AuthService } from './auth.service';
+import { DashboardUiService } from './dashboard/dashboard_ui.service';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +16,7 @@ import { AuthService } from './auth.service';
 export class App {
   protected readonly authService = inject(AuthService);
   protected readonly themeService = inject(ThemeService);
+  protected readonly dashboardUiService = inject(DashboardUiService);
   private readonly router = inject(Router);
 
   protected readonly isDashboard = toSignal(

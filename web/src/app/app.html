@@ -3,7 +3,7 @@
 
   <div class="actions">
     @if (isDashboard()) {
-      <button class="btn">+ Add widget</button>
+      <button class="btn" (click)="dashboardUiService.addOpen.set(true)">+ Add widget</button>
     }
 
     <div class="theme-selector">

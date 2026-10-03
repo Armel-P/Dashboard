@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import 'gridstack/dist/gridstack.min.css';
 
 :root {
   --accent-soft: #2b1d3d;
@@ -52,19 +53,43 @@ body {
 }
 
 .btn {
-  width: 100%;
-  margin-top: 20px;
-  padding: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: auto;
+  padding: 0.625rem 1rem;
+
   background: var(--accent);
   color: var(--on-accent);
+
   border: 0;
   border-radius: var(--radius);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn:hover { background: var(--accent-hover); }
 
-.error { display: block; color: var(--error); font-size: 0.85rem; }
-a { color: var(--accent); }
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+.btn:hover {
+  background: var(--accent-hover);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  display: block;
+  color: var(--error);
+  font-size: 0.85rem;
+}
+
+a {
+  color: var(--accent);
+}

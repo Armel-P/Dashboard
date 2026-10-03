@@ -1,0 +1,145 @@
+<dialog
+  #dlg
+  class="widget-dialog"
+  (close)="closed.emit()"
+  (click)="onBackdropClick($event)"
+>
+  <div class="dialog-body">
+
+    <div
+      class="dialog-header"
+      (mousedown)="startDrag($event)"
+    >
+      <h2 class="dialog-title">
+        Add widget
+      </h2>
+    </div>
+
+    @if (catalog(); as list) {
+      <label class="field">
+        <span class="field-label">
+          Service
+        </span>
+
+        <select
+          [disabled]="list.length === 0"
+          (change)="
+            selectService(
+              $any($event.target).value
+            )
+          "
+        >
+          <option
+            value=""
+            [selected]="!serviceName()"
+          >
+            Choose a service
+          </option>
+
+          @for (
+            s of list;
+            track s.name
+          ) {
+            <option
+              [value]="s.name"
+              [selected]="
+                s.name === serviceName()
+              "
+            >
+              {{ s.label }}
+            </option>
+          }
+        </select>
+
+        @if (list.length === 0) {
+          <small class="error">
+            No service available.
+          </small>
+        }
+      </label>
+
+      <label class="field">
+        <span class="field-label">
+          Widget
+        </span>
+
+        <select
+          [disabled]="!service()"
+          (change)="
+            selectWidget(
+              $any($event.target).value
+            )
+          "
+        >
+          <option
+            value=""
+            [selected]="!widgetId()"
+          >
+            Choose a widget
+          </option>
+
+          @for (
+            w of widgets();
+            track w.id
+          ) {
+            <option
+              [value]="w.id"
+              [selected]="
+                w.id === widgetId()
+              "
+            >
+              {{ w.name }}
+            </option>
+          }
+        </select>
+
+        @if (widget(); as w) {
+          <small>
+            {{ w.description }}
+          </small>
+        }
+      </label>
+
+      @if (widget(); as w) {
+        <app-widget-config-form
+          [widget]="w"
+          [initialValues]="
+            config()?.params ?? {}
+          "
+          [initialRefreshSecs]="
+            config()?.refreshSecs ?? 60
+          "
+          (changed)="
+            configChanged($event)
+          "
+        />
+      }
+    } @else {
+      <p class="hint">
+        Loading services...
+      </p>
+    }
+
+    <div class="actions">
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="close()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="!widget() || !config()"
+        (click)="confirm()"
+      >
+        Add
+      </button>
+
+    </div>
+
+  </div>
+</dialog>

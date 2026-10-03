@@ -37,7 +37,7 @@ actix-ws = "0.4"
 reqwest = { version = "0.13", features = ["json", "query"] }
 
 # Swagger UI documentation
-utoipa = { version = "5.5", features = ["uuid", "macros", "chrono"] }
+utoipa = { version = "6.0", features = ["uuid", "macros", "chrono"] }
 utoipa-swagger-ui = { version = "9", features = ["actix-web"] }
 
 # Error handling

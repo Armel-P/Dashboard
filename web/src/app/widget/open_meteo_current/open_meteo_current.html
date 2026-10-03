@@ -1,0 +1,72 @@
+<div class="weather-widget">
+  <div class="widget-title">
+    <h2>Current weather</h2>
+
+    <button
+      type="button"
+      class="settings-button"
+      aria-label="Modify widget"
+      title="Modify widget"
+      (click)="onModify()?.()"
+    >
+      ⚙
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="state">
+      <span>Loading weather...</span>
+    </div>
+  } @else if (error()) {
+    <div class="state error">
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (weather(); as data) {
+    <div class="weather-main">
+      <div class="location">
+        @if (data.place.name) {
+          <span class="place">
+            {{ data.place.name }}
+          </span>
+        } @else {
+          <span class="place">
+            {{ data.place.latitude }}, {{ data.place.longitude }}
+          </span>
+        }
+
+        @if (data.place.country) {
+          <span class="country">
+            {{ data.place.country }}
+          </span>
+        }
+      </div>
+
+      <div class="temperature-row">
+        <span class="temperature">
+          {{ data.temperature | number:'1.0-1' }}°
+        </span>
+
+        <span class="unit">
+          {{ data.units === 'celsius' ? 'C' : 'F' }}
+        </span>
+      </div>
+
+    </div>
+
+    <div class="weather-details">
+      <div class="detail">
+        <span class="label">Feels like</span>
+        <span class="value">
+          {{ data.feels_like | number:'1.0-1' }}°
+        </span>
+      </div>
+
+      <div class="detail">
+        <span class="label">Wind</span>
+        <span class="value">
+          {{ data.wind_kmh | number:'1.0-0' }} km/h
+        </span>
+      </div>
+    </div>
+  }
+</div>

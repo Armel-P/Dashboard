@@ -10,5 +10,5 @@
   "include": [
     "src/**/*.d.ts",
     "src/**/*.spec.ts"
-  ]
+, "src/app/dialog/modify_widget_dialog/modify_widget_dialog.ts"  ]
 }
