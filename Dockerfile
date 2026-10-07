@@ -15,13 +15,11 @@ FROM rust:1.98-bookworm AS builder
 
 WORKDIR /app
 
-COPY ./Cargo.toml ./Cargo.lock ./
+COPY ./Cargo.toml ./Cargo.lock ./diesel.toml ./
 COPY ./src/ ./src/
-COPY ./.sqlx ./.sqlx
+COPY ./migrations ./migrations
 
-ENV SQLX_OFFLINE=true
-
-RUN cargo build --release --locked
+RUN cargo build --release
 
 
 FROM rust:1.98.0-slim-bookworm AS runtime

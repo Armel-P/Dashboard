@@ -1,12 +1,13 @@
 use actix_files::{Files, NamedFile};
 use actix_web::{App, HttpServer, HttpResponse, web,
                 dev::{ServiceRequest, ServiceResponse, fn_service}};
-use sqlx::{Pool, Postgres};
+use db::DbPool;
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use anyhow::{anyhow};
 use reqwest::Client;
 
 mod api;
+pub mod schema;
 pub mod queries;
 pub mod structs;
 pub mod constants;
@@ -91,9 +92,9 @@ async fn main() -> Result<()> {
         Err(err) => { println!("Error: {}", err); return Err(anyhow!(err)) }
     };
 
-    let db: Pool<Postgres> = db::connect(&db_url)
-        .await
-        .map_err(|e| anyhow::anyhow!("Error connecting to Database: {e}"))?;
+    db::run_migrations(&db_url).await?;
+    let db: DbPool = db::connect(&db_url)?;
+    let db = web::Data::new(db);
 
     let ssl = parse_args(&mut addr, &mut port).ok_or(anyhow::anyhow!("Error parsing arguments."))?;
 
@@ -101,7 +102,7 @@ async fn main() -> Result<()> {
 
     let server = HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(db.clone()))
+            .app_data(db.clone())
             .app_data(web::Data::new(jwt_key.clone()))
             .app_data(web::Data::new(Registry::new()))
             .app_data(web::Data::new(Client::new()))

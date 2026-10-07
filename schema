@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+set -a
+source .env
+set +a
+
+docker compose -f docker-compose.yml up -d --wait postgres
+export DATABASE_URL="postgres://dashboard:${POSTGRES_PASSWORD}@localhost:${DATABASE_PORT}/dashboard"
+diesel migration run

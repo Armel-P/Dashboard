@@ -1,10 +1,10 @@
 use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder, get, web, post,
     middleware::from_fn};
-use sqlx::PgPool;
 use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{
+    db::DbPool,
     services::{
         registery::Registry,
         traits::{AuthKind, ServiceCtx}
@@ -33,7 +33,7 @@ pub async fn get_catalog(
     registry: web::Data<Registry>,
     req: HttpRequest,
     path: web::Path<GetCatalogtUrlInfo>,
-    db: web::Data<PgPool>,
+    db: web::Data<DbPool>,
     http: web::Data<reqwest::Client>,
 ) -> impl Responder {
     let token_id = match req.extensions().get::<Uuid>() {
@@ -41,12 +41,12 @@ pub async fn get_catalog(
         None => return internal_err("Middleware failed")
     };
 
-    let mut tx = match db.begin().await {
-        Ok(tx) => tx,
+    let mut conn = match db.get().await {
+        Ok(conn) => conn,
         Err(error) => return internal_err(&error.to_string()),
     };
 
-    let refresh_token = match find_refresh_token(&mut tx, token_id).await {
+    let refresh_token = match find_refresh_token(&mut conn, token_id).await {
         Ok(Some(token_struct)) => token_struct,
         Ok(None) => return HttpResponse::NotFound()
             .json(MessageResponse { message: "Refresh token not found".to_string() }),
@@ -92,7 +92,7 @@ pub async fn get_widget(
     registry: web::Data<Registry>,
     req: HttpRequest,
     path: web::Path<GetWidgetUrlInfo>,
-    db: web::Data<PgPool>,
+    db: web::Data<DbPool>,
     http: web::Data<reqwest::Client>,
     body: web::Json<Value>,
 ) -> impl Responder {
@@ -101,12 +101,12 @@ pub async fn get_widget(
         None => return internal_err("Middleware failed")
     };
 
-    let mut tx = match db.begin().await {
-        Ok(tx) => tx,
+    let mut conn = match db.get().await {
+        Ok(conn) => conn,
         Err(error) => return internal_err(&error.to_string()),
     };
 
-    let refresh_token = match find_refresh_token(&mut tx, token_id).await {
+    let refresh_token = match find_refresh_token(&mut conn, token_id).await {
         Ok(Some(token_struct)) => token_struct,
         Ok(None) => return HttpResponse::NotFound()
             .json(MessageResponse { message: "Refresh token not found".to_string() }),

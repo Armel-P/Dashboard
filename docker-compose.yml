@@ -22,16 +22,15 @@ services:
     container_name: dashboard-postgres
     restart: unless-stopped
     ports:
-      - ${DATABASE_PORT}:${DATABASE_PORT}
+      - ${DATABASE_PORT}:5432
     environment:
       POSTGRES_USER: dashboard
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: dashboard
     volumes:
       - postgres_prod_data:/var/lib/postgresql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dashboard -d dashboard"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -U dashboard -d dashboard"]
       interval: 5s
       timeout: 5s
       retries: 10

@@ -1,10 +1,12 @@
 use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder,
     middleware::from_fn, post, web};
-use sqlx::{PgPool};
 use uuid::Uuid;
 use chrono::{Utc};
 use jsonwebtoken::{EncodingKey};
+use diesel::result::{DatabaseErrorKind, Error};
+
 use crate::{
+    db::DbPool,
     constants::{REFRESH_TOKEN_LIFETIME_DAYS},
     password::{gen_token, hash_token, hash_password, verify_password, gen_jwt},
     structs::{
@@ -33,12 +35,12 @@ use crate::{
 #[post("/register")]
 pub async fn register(
     body: web::Json<RegisterRequest>,
-    db: web::Data<PgPool>,
+    db: web::Data<DbPool>,
     secret: web::Data<Vec<u8>>,
 ) -> impl Responder {
-    let mut tx = match db.begin().await {
-        Ok(tx) => tx,
-        Err(_) => return internal_err("Failed to retrieve database connection")
+    let mut conn = match db.get().await {
+        Ok(conn) => conn,
+        Err(error) => return internal_err(&error.to_string()),
     };
 
     let password_hash = match hash_password(&body.password) {
@@ -46,26 +48,23 @@ pub async fn register(
         Err(_) => return internal_err("Fail to hash password")
     };
 
-    let user = match insert_user(&mut tx, body.mail.clone(), body.name.clone(), password_hash)
+    let user = match insert_user(&mut conn, body.mail.clone(), body.name.clone(), password_hash)
     .await {
         Ok(id) => id,
-        Err(sqlx::Error::Database(db_error)) if db_error.constraint() == Some("users_mail_key") =>
-            return HttpResponse::Conflict()
-                .json(MessageResponse { message: "An account with this email already exists".to_string() }),
+            Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, info))
+                if info.constraint_name() == Some("users_mail_key") =>
+                return HttpResponse::Conflict()
+                    .json(MessageResponse { message: "An account with this email already exists".to_string() }),
         Err(_) =>
             return internal_err("Failed to create account"),
     };
 
     let token = gen_token();
 
-    let refresh_token = match insert_refresh_token(&mut tx, user.id, token.clone()).await {
+    let refresh_token = match insert_refresh_token(&mut conn, user.id, token.clone()).await {
         Ok(ref_token) => ref_token,
         Err(_) => return internal_err("Failed to store refresh token")
     };
-
-    if let Err(_) = tx.commit().await {
-        return internal_err("Fail to commit changes to db");
-    }
 
     let token_cookie = build_refresh_token_cookie(refresh_token.id, token);
 
@@ -100,15 +99,15 @@ pub async fn register(
 #[post("/login")]
 pub async fn login(
     body: web::Json<LoginRequest>,
-    db: web::Data<PgPool>,
+    db: web::Data<DbPool>,
     secret: web::Data<Vec<u8>>,
 ) -> impl Responder {
-    let mut tx = match db.begin().await {
-        Ok(tx) => tx,
-        Err(_) => return internal_err("Failed to retrieve database connection")
+    let mut conn = match db.get().await {
+        Ok(conn) => conn,
+        Err(error) => return internal_err(&error.to_string()),
     };
 
-    let user: User = match find_user_by_mail(&mut tx, body.mail.clone()).await {
+    let user: User = match find_user_by_mail(&mut conn, body.mail.clone()).await {
         Ok(Some(user)) => user,
         Ok(None) => return HttpResponse::NotFound().json( MessageResponse { message: "Unknown user".to_string() }),
         Err(_) => return internal_err("Failed to fetch user")
@@ -118,14 +117,10 @@ pub async fn login(
         Ok(()) => {
             let token = gen_token();
 
-            let refresh_token = match insert_refresh_token(&mut tx, user.id, token.clone()).await {
+            let refresh_token = match insert_refresh_token(&mut conn, user.id, token.clone()).await {
                 Ok(ref_token) => ref_token,
                 Err(_) => return internal_err("Failed to store refresh token")
             };
-
-            if let Err(_) = tx.commit().await {
-                return internal_err("Fail to commit changes to db");
-            }
 
             let token_cookie = build_refresh_token_cookie(refresh_token.id, token);
 
@@ -165,7 +160,7 @@ pub async fn login(
 #[post("/get_jwt")]
 pub async fn get_jwt(
     req: HttpRequest,
-    db: web::Data<PgPool>,
+    db: web::Data<DbPool>,
     secret: web::Data<Vec<u8>>,
 ) -> impl Responder {
     let cookie = match req.cookie("refresh_token") {
@@ -186,19 +181,19 @@ pub async fn get_jwt(
             .json(MessageResponse { message: "Wrong cookie format".to_string() })
     };
 
-    let mut tx = match db.begin().await {
-        Ok(tx) => tx,
+    let mut conn = match db.get().await {
+        Ok(conn) => conn,
         Err(error) => return internal_err(&error.to_string()),
     };
 
-    let refresh_token = match find_refresh_token(&mut tx, token_id).await {
+    let refresh_token = match find_refresh_token(&mut conn, token_id).await {
         Ok(Some(token_struct)) => token_struct,
         Ok(None) => return HttpResponse::NotFound()
             .json(MessageResponse { message: "Refresh token not found".to_string() }),
         Err(_) => return internal_err("Failed to fetch refresh token")
     };
 
-    let user = match find_user_by_id(&mut tx, refresh_token.user_id).await {
+    let user = match find_user_by_id(&mut conn, refresh_token.user_id).await {
         Ok(Some(user_struct)) => user_struct,
         Ok(None) => return HttpResponse::NotFound()
             .json(MessageResponse { message: "User not found".to_string() }),
@@ -206,11 +201,8 @@ pub async fn get_jwt(
     };
 
     if refresh_token.created_at + chrono::Duration::days(REFRESH_TOKEN_LIFETIME_DAYS) < Utc::now() {
-        if let Err(_) = delete_refresh_token(&mut tx, token_id).await {
+        if let Err(_) = delete_refresh_token(&mut conn, token_id).await {
             return internal_err("Failed to delete expired refresh token");
-        }
-        if let Err(_) = tx.commit().await {
-            return internal_err("Failed to commit changes");
         }
         return HttpResponse::Unauthorized()
             .json(MessageResponse { message: "Refresh token expired".to_string() });
@@ -250,24 +242,20 @@ pub async fn get_jwt(
 #[post("/disconnect")]
 pub async fn disconnect(
     req: HttpRequest,
-    db: web::Data<PgPool>
+    db: web::Data<DbPool>
 ) -> impl Responder {
     let token_id = match req.extensions().get::<Uuid>() {
         Some(id) => *id,
         None => return internal_err("Middleware failed")
     };
 
-    let mut tx = match db.begin().await {
-        Ok(tx) => tx,
+    let mut conn = match db.get().await {
+        Ok(conn) => conn,
         Err(error) => return internal_err(&error.to_string()),
     };
 
-    if delete_refresh_token(&mut tx, token_id).await.is_err() {
+    if delete_refresh_token(&mut conn, token_id).await.is_err() {
         return internal_err("Failed to disconnect user");
-    }
-
-    if tx.commit().await.is_err() {
-        return internal_err("Failed to commit changes");
     }
 
     let cookie_remover = remove_refresh_token_cookie();

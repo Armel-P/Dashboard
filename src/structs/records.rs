@@ -1,14 +1,8 @@
-use sqlx::{FromRow};
-use utoipa::ToSchema;
-use uuid::Uuid;
-use serde_json::Value;
+use diesel::prelude::*;
 
-#[derive(FromRow, ToSchema)]
+#[derive(Debug, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct MapRecord {
-    pub dashboard_map: Option<Value>,
-}
-
-#[derive(FromRow, ToSchema)]
-pub struct IdRecord {
-    pub id: Option<Uuid>,
+    pub dashboard_map: Option<serde_json::Value>,
 }
