@@ -5,7 +5,8 @@ export interface WidgetInstance {
   params: Record<string, string | number>;
   refreshSecs: number;
   locked: boolean;
-  x?: number; y?: number; w: number; h: number;
+  x?: number; y?: number;
+  w: number; h: number; minW: number; minH: number;
 }
 
 export interface ServiceDefinition {

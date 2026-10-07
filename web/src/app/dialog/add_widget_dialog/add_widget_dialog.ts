@@ -132,6 +132,8 @@ export class AddWidgetDialog extends DialogBase {
 
       w: entry.w,
       h: entry.h,
+      minW: entry.minW,
+      minH: entry.minH,
     });
 
     this.close();

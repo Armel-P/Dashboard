@@ -1,0 +1,84 @@
+<div class="forecast-widget">
+  <div class="widget-title">
+    <button
+      type="button"
+      class="settings-button"
+      aria-label="Modify widget"
+      title="Modify widget"
+      (click)="onModify()?.()"
+    >
+      ⚙
+    </button>
+  </div>
+
+  @if (forecast(); as data) {
+    <div class="weather-main">
+      <div class="location">
+        @if (data.place.name) {
+          <span class="place">
+            {{ data.place.name }}
+          </span>
+        } @else {
+          <span class="place">
+            {{ data.place.latitude }}, {{ data.place.longitude }}
+          </span>
+        }
+
+        @if (data.place.country) {
+          <span class="country">
+            {{ data.place.country }}
+          </span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="state">
+      <span>Loading forecast...</span>
+    </div>
+  } @else if (error()) {
+    <div class="state error">
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (forecast(); as data) {
+    <div class="forecast-grid">
+      @for (day of data.days; track trackDay($index, day)) {
+        <div class="forecast-day">
+          <div class="day-header">
+            <span class="weekday">
+              {{ formatDate(day.date) }}
+            </span>
+
+            <span class="date">
+              {{ formatDateLong(day.date) }}
+            </span>
+          </div>
+
+          <div class="weather-icon" aria-hidden="true">
+            {{ weatherIcon(day.weather_code) }}
+          </div>
+
+          <div class="condition">
+            {{ weatherLabel(day.weather_code) }}
+          </div>
+
+          <div class="temperatures">
+            <span class="temp-max">
+              {{ day.temp_max | number:'1.0-1' }}°
+            </span>
+
+            <span class="temp-min">
+              {{ day.temp_min | number:'1.0-1' }}°
+            </span>
+          </div>
+
+          <div class="precipitation">
+            <span class="precipitation-icon">💧</span>
+            <span>{{ day.precipitation_mm | number:'1.0-1' }} mm</span>
+        </div>
+      </div>
+    }
+    </div>
+  }
+</div>

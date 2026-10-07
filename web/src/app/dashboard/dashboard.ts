@@ -123,18 +123,14 @@ export class Dashboard
           `[gs-id="${w.uid}"]`,
         );
     if (el && this.grid) {
-      const definition = WIDGET_REGISTRY.find(
-        entry =>
-          entry.service === w.service &&
-          entry.id === w.widgetId,
-      );
-      if (!definition)
-        return;
-
-      this.grid.makeWidget(el);
-      this.grid.update(el, {
-        minW: definition.minW,
-        minH: definition.minH,
+      this.grid.makeWidget(el, {
+        minW: w.minW,
+        minH: w.minH,
+        w: w.w,
+        h: w.h,
+        x: w.x,
+        y: w.y,
+        id: w.uid,
       });
     }
 
@@ -314,7 +310,16 @@ export class Dashboard
       if (!el)
         continue;
 
-      this.grid.makeWidget(el);
+      this.grid.makeWidget(el, {
+        id: widget.uid,
+        x: widget.x,
+        y: widget.y,
+        w: widget.w,
+        h: widget.h,
+        minW: widget.minW,
+        minH: widget.minH,
+      });
+
       this.applyLockState(widget);
     }
   }
