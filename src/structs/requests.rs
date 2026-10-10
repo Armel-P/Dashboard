@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 use serde_json::Value;
 
@@ -48,13 +48,30 @@ pub struct UpdateMapRequest {
 }
 pub type UpdateMapResponse = MessageResponse;
 
-#[derive(Deserialize)]
-pub struct GetCatalogtUrlInfo {
+#[derive(Deserialize, IntoParams)]
+pub struct ServiceUrlInfo {
     pub service: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub struct GetWidgetUrlInfo {
     pub service: String,
     pub widget_id: String
+}
+
+#[derive(Deserialize)]
+pub struct OAuthCallbackQuery {
+    pub code: Option<String>,
+    pub state: String,
+    pub error: Option<String>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct ConnectUrlResponse {
+    pub url: String,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct ConnectedResponse {
+    pub connected: bool,
 }

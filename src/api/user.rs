@@ -1,6 +1,5 @@
-use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder, web, post, put, get,
+use actix_web::{HttpRequest, HttpResponse, Responder, http::StatusCode, web, post, put, get,
                 middleware::from_fn};
-use uuid::Uuid;
 
 use crate::{
     db::DbPool,
@@ -8,12 +7,12 @@ use crate::{
         requests::{MessageResponse, DeleteResponse, UpdateMapRequest, UpdateMapResponse},
         records::MapRecord,
     },
-    utils::{internal_err, remove_refresh_token_cookie},
+    utils::{http_err, remove_refresh_token_cookie},
     queries::{
-        refresh_tokens::{find_refresh_token}, 
         users::{delete_user, map_update, map_get}
     },
-    middleware::{jwt_auth}
+    middleware::{jwt_auth},
+    api::helpers::get_refresh_token
 };
 
 #[utoipa::path(
@@ -31,25 +30,18 @@ pub async fn delete(
     req: HttpRequest,
     db: web::Data<DbPool>
 ) -> impl Responder {
-    let token_id = match req.extensions().get::<Uuid>() {
-        Some(id) => *id,
-        None => return internal_err("Middleware failed")
-    };
-
     let mut conn = match db.get().await {
         Ok(conn) => conn,
-        Err(error) => return internal_err(&error.to_string()),
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to connect to database"),
     };
 
-    let refresh_token = match find_refresh_token(&mut conn, token_id).await {
-        Ok(Some(token_struct)) => token_struct,
-        Ok(None) => return HttpResponse::NotFound()
-            .json(MessageResponse { message: "Refresh token not found".to_string() }),
-        Err(_) => return internal_err("Failed to fetch refresh token")
+    let refresh_token = match get_refresh_token(&req, &mut conn).await {
+        Ok(token_struct) => token_struct,
+        Err(http_err) => return http_err
     };
 
     if delete_user(&mut conn, refresh_token.user_id).await.is_err() {
-        return internal_err("Failed to disconnect user");
+        return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to disconnect user");
     } // Just delete user, postgre manage the cascade
 
     let cookie_remover = remove_refresh_token_cookie();
@@ -76,25 +68,18 @@ pub async fn update_map(
     req: HttpRequest,
     db: web::Data<DbPool>
 ) -> impl Responder {
-    let token_id = match req.extensions().get::<Uuid>() {
-        Some(id) => *id,
-        None => return internal_err("Middleware failed")
-    };
-
     let mut conn = match db.get().await {
         Ok(conn) => conn,
-        Err(error) => return internal_err(&error.to_string()),
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Filed to connect to database"),
     };
 
-    let refresh_token = match find_refresh_token(&mut conn, token_id).await {
-        Ok(Some(token_struct)) => token_struct,
-        Ok(None) => return HttpResponse::NotFound()
-            .json(MessageResponse { message: "Refresh token not found".to_string() }),
-        Err(_) => return internal_err("Failed to fetch refresh token")
+    let refresh_token = match get_refresh_token(&req, &mut conn).await {
+        Ok(token_struct) => token_struct,
+        Err(http_err) => return http_err
     };
 
     if map_update(&mut conn, refresh_token.user_id, body.map.clone()).await.is_err() {
-        return internal_err("Failed to update map");
+        return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to update map");
     }
 
     HttpResponse::Ok()
@@ -117,28 +102,20 @@ pub async fn get_map(
     req: HttpRequest,
     db: web::Data<DbPool>
 ) -> impl Responder {
-    let token_id = match req.extensions().get::<Uuid>() {
-        Some(id) => *id,
-        None => return internal_err("Middleware failed")
-    };
-
     let mut conn = match db.get().await {
         Ok(conn) => conn,
-        Err(error) => return internal_err(&error.to_string()),
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to connect to database"),
     };
 
-    let refresh_token = match find_refresh_token(&mut conn, token_id).await {
-        Ok(Some(token_struct)) => token_struct,
-        Ok(None) => return HttpResponse::NotFound()
-            .json(MessageResponse { message: "Refresh token not found".to_string() }),
-        Err(_) => return internal_err("Failed to fetch refresh token")
+    let refresh_token = match get_refresh_token(&req, &mut conn).await {
+        Ok(token_struct) => token_struct,
+        Err(http_err) => return http_err
     };
 
     let map_record: MapRecord = match map_get(&mut conn, refresh_token.user_id).await {
         Ok(Some(map)) => map,
-        Ok(None) => return HttpResponse::NotFound()
-            .json(MessageResponse { message: "Not any map saved yet".to_string() }),
-        Err(_) => return internal_err("Failed to retrieve map"),
+        Ok(None) => return http_err(StatusCode::NOT_FOUND, "Not any map saved yet"),
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to retrieve map"),
     };
 
     HttpResponse::Ok().json(map_record.dashboard_map)

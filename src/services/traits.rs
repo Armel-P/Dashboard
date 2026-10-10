@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 use uuid::Uuid;
 
 #[derive(Serialize)]
@@ -22,6 +22,30 @@ pub struct ServiceCtx {
     pub access_token: Option<String>,
     pub http: reqwest::Client,
 }
+impl ServiceCtx {
+    pub fn token(&self) -> Result<&str, ServiceError> {
+        self.access_token.as_deref().ok_or(ServiceError::NotConnected)
+    }
+}
+
+pub fn parse_params<T: serde::de::DeserializeOwned>(params: Value) -> Result<T, ServiceError> {
+    serde_json::from_value(params).map_err(|e| ServiceError::InvalidParams(e.to_string()))
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ParamOption {
+    pub value: String,
+    pub label: String,
+}
+impl ParamOption {
+    pub fn new(value: impl Into<String>, label: impl Into<String>) -> Self {
+        Self { value: value.into(), label: label.into() }
+    }
+
+    pub fn same(v: &str) -> Self {
+        Self::new(v, v)
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ParamSpec {
@@ -34,7 +58,7 @@ pub struct ParamSpec {
 
     #[serde(rename = "enum")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub options: Option<Vec<&'static str>>,
+    pub options: Option<Vec<ParamOption>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default: Option<Value>,
@@ -57,6 +81,7 @@ impl Default for ParamSpec {
         }
     }
 }
+
 #[derive(Serialize)]
 pub struct WidgetSpec {
     pub id: &'static str,
@@ -73,6 +98,8 @@ pub enum ServiceError {
     InvalidParams(String),
     #[error("service not connected")]
     NotConnected,
+    #[error("internal error: {0}")]
+    Internal(String),
     #[error("upstream error: {0}")]
     Upstream(String),
     #[error(transparent)]
@@ -82,10 +109,56 @@ pub enum ServiceError {
 #[async_trait]
 pub trait Service: Send + Sync + 'static {
     fn name(&self) -> &'static str;
-    fn auth(&self) -> AuthKind;
-    fn describe(&self) -> Value;
-    fn describe_catalog(&self) -> Value;
+    fn label(&self) -> &'static str;
+
+    fn describe(&self) -> Value {
+        json!({
+            "name": self.name(),
+            "widgets": self.widgets().into_iter().map(|widget| {
+                json!({
+                    "name": widget.name,
+                    "description": widget.description,
+                    "params": widget.params_schema.into_iter().map(|param| {
+                        json!({
+                            "name": param.name,
+                            "type": param.param_type,
+                        })
+                    }).collect::<Vec<_>>()
+                })
+            }).collect::<Vec<_>>()
+        })
+    }
+
+    fn describe_catalog(&self) -> Value {
+        json!({
+            "name": self.name(),
+            "label": self.label(),
+            "auth": self.auth(),
+            "widgets": self.widgets().into_iter().map(|w| json!({
+                "id": w.id, "name": w.name, "description": w.description, "params": w.params_schema,
+            })).collect::<Vec<_>>()
+        })
+    }
+
     fn widgets(&self) -> Vec<WidgetSpec>;
+
+    async fn fill_options(
+        &self,
+        _ctx: &ServiceCtx,
+        _widgets: &mut [WidgetSpec]
+    ) -> Result<(), ServiceError> {
+        Ok(())
+    }
+
+    fn auth(&self) -> AuthKind { AuthKind::None }
+
+    async fn identify(
+        &self,
+        _http: &reqwest::Client,
+        _access_token: &str,
+    ) -> Result<(String, Value), ServiceError> {
+        Err(ServiceError::InvalidParams("provider does not support OAuth".into()))
+    }
 
     async fn fetch_widget(
         &self,

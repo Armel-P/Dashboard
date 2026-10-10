@@ -11,6 +11,7 @@ pub mod schema;
 pub mod queries;
 pub mod structs;
 pub mod constants;
+pub mod crypto;
 mod db;
 pub mod middleware;
 pub mod password;
@@ -18,6 +19,7 @@ pub mod utils;
 pub mod services;
 
 use services::registery::Registry;
+use structs::oauth::PendingAuths;
 
 pub type Result<T> = anyhow::Result<T>;
 
@@ -106,6 +108,7 @@ async fn main() -> Result<()> {
             .app_data(web::Data::new(jwt_key.clone()))
             .app_data(web::Data::new(Registry::new()))
             .app_data(web::Data::new(Client::new()))
+            .app_data(web::Data::new(PendingAuths::new()))
             .configure(api::configure)
             .service(
                 Files::new("/", constants::WEB_ROOT)

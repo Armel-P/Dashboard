@@ -2,7 +2,10 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     services::{
-        providers::open_meteo::OpenMeteo,
+        providers::{
+            open_meteo::OpenMeteo,
+            soundcloud::SoundCloud
+        },
         traits::Service
     }
 };
@@ -14,8 +17,7 @@ impl Registry {
     pub fn new() -> Self {
         let services: Vec<Arc<dyn Service>> = vec![
             Arc::new(OpenMeteo),
-            // Arc::new(GitHub),
-            // Arc::new(SoundCloud),
+            Arc::new(SoundCloud),
         ];
         Self(Arc::new(services.into_iter().map(|s| (s.name(), s)).collect()))
     }

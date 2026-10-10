@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, cookie::{SameSite, Cookie, time::Duration}};
+use actix_web::{HttpResponse, http::{header, StatusCode}, cookie::{SameSite, Cookie, time::Duration}};
 use uuid::Uuid;
 
 use crate::{
@@ -8,10 +8,14 @@ use crate::{
     }
 };
 
-pub fn internal_err(msg: &str) -> HttpResponse {
-    HttpResponse::InternalServerError().json(MessageResponse {
+pub fn http_err(status: StatusCode, msg: &str) -> HttpResponse {
+    HttpResponse::build(status).json(MessageResponse {
         message: msg.to_string(),
     })
+}
+
+pub fn redirect(url: String) -> HttpResponse {
+    HttpResponse::Found().insert_header((header::LOCATION, url)).finish()
 }
 
 pub fn build_refresh_token_cookie(token_id: Uuid, secret: String) -> Cookie<'static> {

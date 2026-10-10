@@ -19,8 +19,8 @@
             </option>
           }
           @for (opt of p.enum; track opt) {
-            <option [value]="opt" [selected]="values()[p.name] === opt">
-              {{ opt }}
+            <option [value]="opt.label" [selected]="values()[p.name] === opt.value">
+              {{ opt.label }}
             </option>
           }
         </select>

@@ -12,6 +12,7 @@ mod docs;
 mod health;
 mod user;
 mod widget;
+pub mod helpers;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(

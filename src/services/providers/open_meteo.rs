@@ -173,50 +173,15 @@ impl OpenMeteo {
 
 #[async_trait]
 impl Service for OpenMeteo {
-    fn name(&self) -> &'static str {
-        "open_meteo"
-    }
+    fn name(&self) -> &'static str { "open_meteo" }
 
-    fn auth(&self) -> AuthKind {
-        AuthKind::None
-    }
-
-    fn describe(&self) -> Value {
-        json!({
-            "name": self.name(),
-            "widgets": self.widgets().into_iter().map(|widget| {
-                json!({
-                    "name": widget.name,
-                    "description": widget.description,
-                    "params": widget.params_schema.into_iter().map(|param| {
-                        json!({
-                            "name": param.name,
-                            "type": param.param_type,
-                        })
-                    }).collect::<Vec<_>>()
-                })
-            }).collect::<Vec<_>>()
-        })
-    }
-
-    fn describe_catalog(&self) -> Value {
-        json!({
-            "name": self.name(),
-            "label": "Weather",
-            "auth": self.auth(),
-            "widgets": self.widgets().into_iter().map(|w| json!({
-                "id": w.id,
-                "name": w.name,
-                "description": w.description,
-                "params": w.params_schema,
-            })).collect::<Vec<_>>()
-        })
-    }
+    fn label(&self) -> &'static str { "Open Meteo" }
 
     fn widgets(&self) -> Vec<WidgetSpec> {
         let location_schema: Vec<ParamSpec> = vec![
             ParamSpec { name: "city", param_type: "string", ..Default::default() },
-            ParamSpec { name: "units", param_type: "string", options: Some(vec!["celsius", "fahrenheit"]),
+            ParamSpec { name: "units", param_type: "string",
+                options: Some(vec![ParamOption::same("celsius"), ParamOption::same("fahrenheit")]),
                 default: Some(json!("celsius")), ..Default::default() },
             ParamSpec { name: "latitude", param_type: "number", optional: true, ..Default::default()},
             ParamSpec { name: "longitude", param_type: "number", optional: true, ..Default::default() },

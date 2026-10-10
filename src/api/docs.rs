@@ -1,7 +1,11 @@
-use actix_web::{HttpResponse, Responder, get, web};
+use actix_web::{HttpResponse, Responder, http::StatusCode, get, web};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::{Config, SwaggerUi};
-use crate::api::ApiDoc;
+
+use crate::{
+    api::ApiDoc,
+    utils::http_err
+};
 
 #[get("/openapi.json")]
 async fn openapi() -> impl Responder {
@@ -10,8 +14,7 @@ async fn openapi() -> impl Responder {
             .content_type("application/json")
             .body(json),
 
-        Err(err) => HttpResponse::InternalServerError()
-            .body(format!("Failed to generate OpenAPI spec: {err}")),
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to generate OpenAPI spec"),
     }
 }
 

@@ -29,8 +29,13 @@ export interface ParamDefinition {
   name: string;
   type: 'string' | 'number' | 'integer';
   optional: boolean;
-  enum?: string[];
+  enum?: ParamOption[];
   default?: unknown;
   minimum?: number;
   maximum?: number;
+}
+
+export interface ParamOption {
+  value: String,
+  label: String,
 }
