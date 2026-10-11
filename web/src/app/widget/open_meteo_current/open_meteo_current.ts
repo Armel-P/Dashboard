@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { EMPTY, switchMap, tap, timer, catchError } from 'rxjs';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { WidgetService } from '../widget.service';
+import { FreeWidgetService } from '../../services/service.free';
 import { CurrentWeather } from '../../services/open_meteo.service';
 
 @Component({
@@ -14,7 +14,7 @@ import { CurrentWeather } from '../../services/open_meteo.service';
   styleUrl: './open_meteo_current.css',
 })
 export class OpenMeteoCurrent {
-  private readonly widgetService = inject(WidgetService);
+  private readonly widgetService = inject(FreeWidgetService);
 
   params = input.required<Record<string, string | number>>();
   refreshSecs = input.required<number>();

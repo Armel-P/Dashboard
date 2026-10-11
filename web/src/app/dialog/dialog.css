@@ -1,4 +1,7 @@
 .widget-dialog {
+  position: fixed;
+  margin: 0;
+
   width: min(700px, 92vw);
   max-height: 90vh;
 
@@ -6,15 +9,11 @@
   left: 25%;
 
   box-sizing: border-box;
-
   border: 1px solid var(--border);
   border-radius: var(--radius);
-
   background: var(--card);
   color: var(--text);
-
   box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
-
   overflow: auto;
 }
 

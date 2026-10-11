@@ -1,29 +1,24 @@
-import { AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef,
-  inject, signal } from '@angular/core';
+import {AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef,
+    inject, signal, input, output} from '@angular/core';
 import { NgComponentOutlet } from '@angular/common';
 import { GridStack, GridStackOptions } from 'gridstack';
 
 import { DashboardUiService } from './dashboard_ui.service';
-import { DashboardService } from './dashboard.service';
+import { DashboardService } from './dashboard/dashboard.service';
 import { WidgetInstance } from '../widget/widget.types';
-import { WIDGET_REGISTRY } from '../widget/widget.registry';
+import { WIDGET_REGISTRY, FREE_WIDGET_REGISTRY } from '../widget/widget.registry';
 import { AddWidgetDialog } from '../dialog/add_widget_dialog/add_widget_dialog';
 import { ModifyWidgetDialog } from '../dialog/modify_widget_dialog/modify_widget_dialog';
-
-export interface DashboardMap {
-  widgets: WidgetInstance[];
-}
+import { DashboardMap } from './dashboard/dashboard.service';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-shared-dashboard',
   standalone: true,
   imports: [NgComponentOutlet, AddWidgetDialog, ModifyWidgetDialog],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  templateUrl: './shared.html',
+  styleUrl: './shared.css',
 })
-export class Dashboard
-  implements AfterViewInit
-{
+export class SharedDashboard implements AfterViewInit {
   @ViewChild('grid', { static: true })
   private gridEl!: ElementRef<HTMLElement>;
 
@@ -37,6 +32,9 @@ export class Dashboard
   private grid: GridStack | null = null;
 
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  readonly freeMode = input(false);
+  readonly emptyChange = output<boolean>();
 
   private readonly gridOptions:
     GridStackOptions = {
@@ -56,7 +54,12 @@ export class Dashboard
     );
 
     this.setupGridEvents();
-    this.loadFromServer();
+
+    if (this.freeMode()) {
+        this.emptyChange.emit(this.widgets().length === 0);
+    } else {
+        this.loadFromServer();
+  }
   }
 
   private setupGridEvents(): void {
@@ -70,20 +73,11 @@ export class Dashboard
           const updated = [...current];
 
           for (const node of nodes) {
-            const uid = String(
-              node.id ??
-              node.el?.getAttribute(
-                'gs-id',
-              ) ??
-              '',
-            );
+            const uid = String(node.id ?? node.el?.getAttribute('gs-id') ?? '');
             if (!uid)
               continue;
 
-            const index =
-              updated.findIndex(
-                w => w.uid === uid,
-              );
+            const index = updated.findIndex(w => w.uid === uid);
             if (index === -1)
               continue;
 
@@ -103,12 +97,16 @@ export class Dashboard
   }
 
   componentFor(w: WidgetInstance) {
-    return WIDGET_REGISTRY.find(
-      entry =>
+    const registry = this.freeMode()
+        ? FREE_WIDGET_REGISTRY
+        : WIDGET_REGISTRY;
+
+    return registry.find(
+        entry =>
         entry.service === w.service &&
         entry.id === w.widgetId,
     )?.component ?? null;
-  }
+    }
 
   add(w: WidgetInstance): void {
     this.widgets.update(
@@ -136,6 +134,7 @@ export class Dashboard
 
     this.applyLockState(w);
     this.scheduleSave();
+    this.emptyChange.emit(this.widgets().length === 0);
   }
 
   remove(uid: string): void {
@@ -155,6 +154,7 @@ export class Dashboard
     );
 
     this.scheduleSave();
+    this.emptyChange.emit(this.widgets().length === 0);
   }
 
   toggleLock(uid: string): void {
@@ -238,6 +238,9 @@ export class Dashboard
   }
 
   private scheduleSave(): void {
+    if (this.freeMode())
+        return;
+
     if (this.saveTimer !== null) {
       clearTimeout(
         this.saveTimer,

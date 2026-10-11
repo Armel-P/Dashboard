@@ -22,7 +22,10 @@ export class App {
   protected readonly isDashboard = toSignal(
     this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-      map(e => e.urlAfterRedirects.startsWith('/dashboard')),
+      map(e => {
+        const url = e.urlAfterRedirects;
+        return url.startsWith('/dashboard') || url.startsWith('/demo');
+      }),
     ),
     { initialValue: false },
   );

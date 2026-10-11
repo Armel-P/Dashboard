@@ -1,6 +1,6 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable } from "rxjs";
-import { WidgetService } from "./service.free";
+import { FreeWidgetService } from "./service.free";
 
 export interface OpenMeteoPlace {
   name: string;
@@ -36,7 +36,7 @@ export interface DailyForecast {
   providedIn: 'root',
 })
 export class OpenMeteoService {
-  private readonly widgets = inject(WidgetService);
+  private readonly widgets = inject(FreeWidgetService);
 
   current(city: string, units = 'celsius') {
     return this.widgets.getWidget(

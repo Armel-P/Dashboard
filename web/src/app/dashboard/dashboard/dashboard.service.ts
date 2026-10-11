@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { API_BASE } from '../config/api';
-import { WidgetInstance } from '../widget/widget.types';
+import { API_BASE } from '../../config/api';
+import { WidgetInstance } from '../../widget/widget.types';
 
 export interface DashboardMap {
   widgets: WidgetInstance[];

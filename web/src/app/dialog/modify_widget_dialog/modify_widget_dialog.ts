@@ -1,7 +1,9 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs';
 
-import { WIDGET_REGISTRY, SERVICE_NAMES } from '../../widget/widget.registry';
+import { WIDGET_REGISTRY, FREE_WIDGET_REGISTRY,
+  SERVICE_NAMES, FREE_SERVICE_NAMES } from '../../widget/widget.registry';
 import { WidgetService } from '../../widget/widget.service';
 import { WidgetInstance } from '../../widget/widget.types';
 import { DialogBase } from '../dialog.base';
@@ -21,12 +23,20 @@ export class ModifyWidgetDialog extends DialogBase {
   private readonly widgetService = inject(WidgetService);
 
   instance = input.required<WidgetInstance>();
+  freeMode = input(false);
   saved = output<WidgetInstance>();
   deleted = output<string>();
   closed = output<void>();
 
   protected readonly catalog = toSignal(
-    this.widgetService.getCatalogs(SERVICE_NAMES),
+    toObservable(this.freeMode).pipe(
+      switchMap(freeMode =>
+        this.widgetService.getCatalogs(
+          freeMode ? FREE_SERVICE_NAMES : SERVICE_NAMES,
+          freeMode,
+        ),
+      ),
+    ),
     { initialValue: null },
   );
 
@@ -35,16 +45,21 @@ export class ModifyWidgetDialog extends DialogBase {
 
   protected readonly widget = computed(() => {
     const instance = this.instance();
+    const registry = this.freeMode() ? FREE_WIDGET_REGISTRY : WIDGET_REGISTRY;
+
+    const registered = registry.some(
+      entry =>
+        entry.service === instance.service &&
+        entry.id === instance.widgetId,
+    );
+
+    if (!registered)
+      return null;
 
     return this.catalog()
-      ?.find(
-        service =>
-          service.name === instance.service,
-      )
-      ?.widgets.find(
-        widget =>
-          widget.id === instance.widgetId,
-      ) ?? null;
+      ?.find(service => service.name === instance.service)
+      ?.widgets.find(widget => widget.id === instance.widgetId)
+      ?? null;
   });
 
   constructor() {

@@ -2,7 +2,8 @@ import { Routes } from '@angular/router';
 import { guestGuard, authGuard } from './auth.guards';
 import { Home } from './home/home';
 import { Auth, AuthMode } from './auth/auth';
-import { Dashboard } from './dashboard/dashboard';
+import { Dashboard } from './dashboard/dashboard/dashboard';
+import { Demo } from './dashboard/demo/demo';
 import { Profile } from './profile/profile';
 
 export const routes: Routes = [
@@ -23,6 +24,10 @@ export const routes: Routes = [
     component: Auth,
     data: { mode: AuthMode.Register },
     canActivate: [guestGuard],
+  },
+  {
+    path: 'demo',
+    component: Demo,
   },
   {
     path: 'dashboard',

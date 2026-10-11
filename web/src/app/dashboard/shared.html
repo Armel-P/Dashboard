@@ -15,6 +15,7 @@
             inputs: {
               params: w.params,
               refreshSecs: w.refreshSecs,
+              freeMode: freeMode(),
               onModify: () => openModify(w.uid)
             }
           "
@@ -26,13 +27,16 @@
 
 @if (ui.addOpen()) {
   <app-add-widget-dialog
+    [freeMode]="freeMode()"
     (added)="add($event)"
     (closed)="ui.addOpen.set(false)"
   />
 }
+
 @if (editingWidget(); as widget) {
   <app-modify-widget-dialog
     [instance]="widget"
+    [freeMode]="freeMode()"
     (saved)="modify($event)"
     (deleted)="deleteFromDialog($event)"
     (closed)="closeModify()"

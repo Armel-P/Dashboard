@@ -1,6 +1,7 @@
 use actix_web::{HttpRequest, HttpResponse, Responder, delete, get, http::{StatusCode}, middleware::from_fn, post, web};
 use serde_json::Value;
 use std::time::Instant;
+use uuid::Uuid;
 
 use crate::{
     api::helpers::get_refresh_token,
@@ -11,7 +12,8 @@ use crate::{
     services::{
         connection::{enc, build_ctx},
         oauth,
-        registery::Registry, traits::{AuthKind, ServiceError}
+        registery::Registry, traits::{AuthKind, ServiceError},
+        traits::ServiceCtx
     },
     structs::{
         oauth::{NewOauthConnection, PendingAuth, PendingAuths, ClientCreds},
@@ -310,11 +312,86 @@ pub async fn get_widget(
     }
 }
 
+
+#[utoipa::path(
+    get,
+    path = "/api/widgets/catalog-free/{service}",
+    params(ServiceUrlInfo),
+    responses(
+        (status = 200, description = "Servic catalog", content_type = "application/json"),
+        (status = 404, description = "Not found", content_type = "application/json", body = MessageResponse),
+        (status = 500, description = "Internal server error", content_type = "application/json", body = MessageResponse)
+    ),
+    security(("bearer_auth" = []))
+)]
+#[get("catalog-free/{service}")]
+pub async fn get_catalog_free(
+    registry: web::Data<Registry>,
+    path: web::Path<ServiceUrlInfo>,
+    http: web::Data<reqwest::Client>,
+) -> impl Responder {
+    let service_info = path.into_inner();
+    let service = match registry.get(&service_info.service) {
+        Some(svc) => svc,
+        None => return http_err(StatusCode::NOT_FOUND, "Unknown service")
+    };
+
+    let mut ctx = match service.auth() {
+        AuthKind::None => ServiceCtx { user_id: Uuid::nil(), access_token: None, http: http.get_ref().clone() },
+        _ => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Not available in free mode")
+    };
+
+    let catalog = match service.describe_catalog(&mut ctx).await {
+        Ok(catalog) => catalog,
+        Err(err) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
+    };
+
+    HttpResponse::Ok().json(catalog)
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/widgets/free/{service}/{widget_id}",
+    params(GetWidgetUrlInfo),
+    request_body = Value,
+    responses(
+        (status = 200, description = "Widget datas", content_type = "application/json"),
+        (status = 404, description = "Not found", content_type = "application/json", body = MessageResponse),
+        (status = 500, description = "Internal server error", content_type = "application/json", body = MessageResponse)
+    ),
+    security(("bearer_auth" = []))
+)]
+#[post("free/{service}/{widget_id}")]
+pub async fn get_widget_free(
+    registry: web::Data<Registry>,
+    path: web::Path<GetWidgetUrlInfo>,
+    http: web::Data<reqwest::Client>,
+    body: web::Json<Value>,
+) -> impl Responder {
+    let widget_info = path.into_inner();
+
+    let service = match registry.get(&widget_info.service) {
+        Some(svc) => svc,
+        None => return http_err(StatusCode::NOT_FOUND, "Unknown service")
+    };
+
+    let ctx = match service.auth() {
+        AuthKind::None => ServiceCtx { user_id: Uuid::nil(), access_token: None, http: http.get_ref().clone() },
+        _ => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Not available in free mode")
+    };
+
+    match service.fetch_widget(&ctx, &widget_info.widget_id, body.into_inner()).await {
+        Ok(data) => HttpResponse::Ok().json(data),
+        Err(error) => http_err(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string())
+    }
+}
+
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/widgets")
             .service(connect_callback)
-            // implement free get widget and free get catalog too for free dashboard
+            .service(get_catalog_free)
+            .service(get_widget_free)
             .service(
                 web::scope("")
                     .wrap(from_fn(jwt_auth))

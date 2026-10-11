@@ -1,8 +1,9 @@
 import {AfterViewInit, Component, ElementRef, ViewChild,
-  computed, inject, output, signal} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+  computed, inject, input, output, signal} from '@angular/core';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs';
 
-import {WIDGET_REGISTRY, SERVICE_NAMES} from '../../widget/widget.registry';
+import {WIDGET_REGISTRY, SERVICE_NAMES, FREE_WIDGET_REGISTRY, FREE_SERVICE_NAMES} from '../../widget/widget.registry';
 import { WidgetService } from '../../widget/widget.service';
 import { WidgetInstance} from '../../widget/widget.types';
 import { DialogBase } from '../dialog.base';
@@ -18,11 +19,17 @@ import { WidgetConfig, WidgetConfigForm } from '../widget_config_form/widget_con
 export class AddWidgetDialog extends DialogBase {
   private readonly widgetService = inject(WidgetService);
 
+  freeMode = input(false);
+
   added = output<WidgetInstance>();
   closed = output<void>();
 
   protected readonly catalog = toSignal(
-    this.widgetService.getCatalogs(SERVICE_NAMES),
+    toObservable(this.freeMode).pipe(
+      switchMap(free => free
+        ? this.widgetService.getCatalogs(FREE_SERVICE_NAMES, free)
+        : this.widgetService.getCatalogs(SERVICE_NAMES, free)),
+    ),
     { initialValue: null },
   );
 
@@ -147,10 +154,12 @@ export class AddWidgetDialog extends DialogBase {
     service: string,
     id: string,
   ) {
-    return WIDGET_REGISTRY.find(
-      e =>
-        e.service === service &&
-        e.id === id,
+    const registry = this.freeMode()
+      ? FREE_WIDGET_REGISTRY
+      : WIDGET_REGISTRY;
+
+    return registry.find(
+      e => e.service === service && e.id === id,
     );
   }
 }

@@ -11,16 +11,20 @@ import { ServiceDefinition } from "./widget.types";
 export class WidgetService {
   private readonly http = inject(HttpClient);
 
-  getCatalog(service: string): Observable<ServiceDefinition> {
-    return this.http.get<ServiceDefinition>(`${API_BASE}/widgets/catalog/${service}`);
+  getCatalog(service: string, freeMode: boolean): Observable<ServiceDefinition> {
+    const endpoint = freeMode
+      ? 'catalog-free'
+      : 'catalog';
+
+  return this.http.get<ServiceDefinition>(`${API_BASE}/widgets/${endpoint}/${service}`);
   }
 
-  getCatalogs(services: string[]): Observable<ServiceDefinition[]> {
+  getCatalogs(services: string[], freeMode: boolean): Observable<ServiceDefinition[]> {
     if (services.length === 0) return of([]);
 
     return forkJoin(
       services.map(name =>
-        this.getCatalog(name).pipe(catchError(() => of(null))),
+        this.getCatalog(name, freeMode).pipe(catchError(() => of(null))),
       ),
     ).pipe(
       map(list => list.filter((s): s is ServiceDefinition => s !== null)),
