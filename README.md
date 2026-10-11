@@ -186,7 +186,3 @@ Make and test your changes.
 Open a pull request describing the changes.
 
 Please keep database migrations, configuration changes, and application code consistent with one another.
-
-License
-
-No license information is specified in this README. Please consult the repository for the applicable license before redistributing or modifying the project.
