@@ -17,10 +17,9 @@ use crate::{
     middleware::{jwt_auth},
     queries::{
         users::{insert_user, find_user_by_id, find_user_by_mail},
-        refresh_tokens::{insert_refresh_token, delete_refresh_token}
+        refresh_tokens::{insert_refresh_token, delete_refresh_token, find_refresh_token}
     },
-    utils::{http_err, build_refresh_token_cookie, remove_refresh_token_cookie},
-    api::helpers::get_refresh_token
+    utils::{http_err, build_refresh_token_cookie, remove_refresh_token_cookie}
 };
 
 #[utoipa::path(
@@ -176,9 +175,10 @@ pub async fn get_jwt(
         Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to connect to database"),
     };
 
-    let refresh_token = match get_refresh_token(&req, &mut conn).await {
-        Ok(token_struct) => token_struct,
-        Err(http_error) => return http_error
+    let refresh_token = match find_refresh_token(&mut conn, token_id).await {
+        Ok(Some(token_struct)) => token_struct,
+        Ok(None) => return http_err(StatusCode::NOT_FOUND, "Unknown refresh token"),
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
     };
 
     let user = match find_user_by_id(&mut conn, refresh_token.user_id).await {

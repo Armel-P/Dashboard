@@ -11,8 +11,11 @@ services:
       SERVER_HOST: ${SERVER_HOST}
       SERVER_PORT: ${SERVER_PORT}
       SECRET: ${SECRET}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
       DATABASE_URL: postgres://dashboard:${POSTGRES_PASSWORD}@postgres:5432/dashboard
       RUST_LOG: ${RUST_LOG}
+      SOUNDCLOUD_CLIENT_ID: ${SOUNDCLOUD_CLIENT_ID}
+      SOUNDCLOUD_CLIENT_SECRET: ${SOUNDCLOUD_CLIENT_SECRET}
     depends_on:
       postgres:
         condition: service_healthy

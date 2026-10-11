@@ -1,0 +1,132 @@
+
+<div class="soundcloud-widget">
+  <div class="playlist-header">
+    @if (data(); as result) {
+      @if (result.playlist.artwork_url) {
+        <img
+          class="playlist-artwork"
+          [src]="result.playlist.artwork_url"
+          [alt]="result.playlist.title + ' artwork'"
+        />
+      } @else {
+        <div class="playlist-artwork artwork-placeholder" aria-hidden="true">
+          ♪
+        </div>
+      }
+
+      <div class="playlist-info">
+        @if (result.playlist.permalink_url) {
+          <a
+            class="playlist-title"
+            [href]="result.playlist.permalink_url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ result.playlist.title }}
+          </a>
+        } @else {
+          <span class="playlist-title">
+            {{ result.playlist.title }}
+          </span>
+        }
+
+        <span class="track-count">
+          {{ result.tracks.length }}
+          {{ result.tracks.length === 1 ? 'track' : 'tracks' }}
+        </span>
+      </div>
+    }
+
+    <button
+      type="button"
+      class="settings-button"
+      aria-label="Modify widget"
+      title="Modify widget"
+      (click)="onModify()?.()"
+    >
+      ⚙
+    </button>
+  </div>
+
+  @if (loading() && !data()) {
+    <div class="state">
+      Loading playlist...
+    </div>
+  } @else if (error() && !data()) {
+    <div class="state error">
+      {{ error() }}
+    </div>
+  } @else if (data(); as result) {
+    @if (embedUrl(); as src) {
+      <iframe
+        class="soundcloud-player"
+        [src]="src"
+        title="SoundCloud playlist player"
+        allow="autoplay"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+      ></iframe>
+    }
+
+    @if (error()) {
+      <div class="refresh-error">
+        {{ error() }} Showing the last loaded playlist.
+      </div>
+    }
+
+    @if (result.tracks.length === 0) {
+      <div class="state">
+        This playlist has no tracks.
+      </div>
+    } @else {
+      <div class="track-list">
+        @for (track of result.tracks; track trackById($index, track)) {
+          <div class="track">
+            @if (track.artwork_url) {
+              <img
+                class="track-artwork"
+                [src]="track.artwork_url"
+                [alt]=""
+                loading="lazy"
+              />
+            } @else {
+              <div class="track-artwork artwork-placeholder" aria-hidden="true">
+                ♪
+              </div>
+            }
+
+            <div class="track-info">
+              @if (track.permalink_url) {
+                <a
+                  class="track-title"
+                  [href]="track.permalink_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [title]="track.title"
+                >
+                  {{ track.title }}
+                </a>
+              } @else {
+                <span class="track-title" [title]="track.title">
+                  {{ track.title }}
+                </span>
+              }
+
+              <span class="track-artist">
+                {{ track.artist || 'Unknown artist' }}
+              </span>
+            </div>
+
+            <span class="track-duration">
+              {{ formatDuration(track.duration_ms) }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+  } @else if (error()) {
+    <div class="state error">
+      {{ error() }}
+    </div>
+  }
+</div>

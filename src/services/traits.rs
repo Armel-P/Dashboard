@@ -129,15 +129,17 @@ pub trait Service: Send + Sync + 'static {
         })
     }
 
-    fn describe_catalog(&self) -> Value {
-        json!({
+    async fn describe_catalog(&self, ctx: &ServiceCtx) -> Result<Value, ServiceError> {
+        let mut widgets = self.widgets();
+        self.fill_options(ctx, &mut widgets).await?;
+        Ok(json!({
             "name": self.name(),
             "label": self.label(),
             "auth": self.auth(),
-            "widgets": self.widgets().into_iter().map(|w| json!({
+            "widgets": widgets.into_iter().map(|w| json!({
                 "id": w.id, "name": w.name, "description": w.description, "params": w.params_schema,
             })).collect::<Vec<_>>()
-        })
+        }))
     }
 
     fn widgets(&self) -> Vec<WidgetSpec>;

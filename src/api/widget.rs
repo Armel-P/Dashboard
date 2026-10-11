@@ -103,7 +103,7 @@ pub async fn connect_callback(
     query: web::Query<OAuthCallbackQuery>,
 ) -> HttpResponse {
     let name = path.into_inner().service;
-    let fail = |why: &str| redirect(format!("{FRONT_URL}/connections?error={why}"));
+    let fail = |why: &str| redirect(format!("{FRONT_URL}/profile?error={why}"));
 
     let Some((_, pa)) = pending.remove(&query.state) else { return fail("invalid_state") };
     if pa.service != name || pa.created_at.elapsed() > STATE_TTL { return fail("invalid_state"); }
@@ -113,7 +113,7 @@ pub async fn connect_callback(
     let Some(code) = query.code.as_deref() else { return fail("missing_code") };
 
     match finish_connection(&registry, &db, http.get_ref(), pa, code).await {
-        Ok(()) => redirect(format!("{}/connections?connected={name}", FRONT_URL)),
+        Ok(()) => redirect(format!("{FRONT_URL}/profile?connected={name}")),
         Err(e) => { tracing::error!("oauth callback failed: {e}");
         fail("exchange_failed") }
     }
@@ -245,12 +245,17 @@ pub async fn get_catalog(
         None => return http_err(StatusCode::NOT_FOUND, "Unknown service")
     };
 
-    let _ = match build_ctx(&mut conn, http.get_ref(), service.as_ref(), refresh_token.user_id).await {
-        Ok(c) => c,
+    let mut ctx = match build_ctx(&mut conn, http.get_ref(), service.as_ref(), refresh_token.user_id).await {
+        Ok(ctx) => ctx,
         Err(resp) => return resp,
     };
 
-    HttpResponse::Ok().json(service.describe_catalog())
+    let catalog = match service.describe_catalog(&mut ctx).await {
+        Ok(catalog) => catalog,
+        Err(err) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
+    };
+
+    HttpResponse::Ok().json(catalog)
 }
 
 // TODO: migrate to QUERY method once actix-web v5.0 and utoipa supports OpenAPI 3.2.0

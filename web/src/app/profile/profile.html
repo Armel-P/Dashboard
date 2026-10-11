@@ -36,16 +36,67 @@
       </p>
 
       <div class="services-list">
-        <div class="service">
-          <div>
-            <strong>SoundCloud</strong>
-            <span>Not connected</span>
-          </div>
+        @for (service of oauthServices; track service) {
+          <div class="service">
+            <div>
+              <strong>{{ service }}</strong>
 
-          <button type="button" class="btn">
-            Connect
-          </button>
-        </div>
+              @switch (connectionStates()[service]) {
+                @case ('loading') {
+                  <span>Checking connection...</span>
+                }
+                @case ('connected') {
+                  <span>Connected</span>
+                }
+                @case ('disconnected') {
+                  <span>Not connected</span>
+                }
+                @case ('error') {
+                  <span>Unable to check connection</span>
+                }
+              }
+
+              @if (serviceErrors()[service]; as error) {
+                <span class="service-error">{{ error }}</span>
+              }
+            </div>
+
+            <div class="service-actions">
+              @if (connectionStates()[service] === 'error') {
+                <button
+                  type="button"
+                  class="btn"
+                  [disabled]="serviceActions()[service]"
+                  (click)="retryConnectionCheck(service)"
+                >
+                  Retry
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn"
+                  [disabled]="
+                    connectionStates()[service] === 'loading' ||
+                    serviceActions()[service]
+                  "
+                  (click)="
+                    connectionStates()[service] === 'connected'
+                      ? disconnectService(service)
+                      : connectService(service)
+                  "
+                >
+                  @if (serviceActions()[service]) {
+                    Working...
+                  } @else if (connectionStates()[service] === 'connected') {
+                    Disconnect
+                  } @else {
+                    Connect
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
       </div>
     </section>
   </div>

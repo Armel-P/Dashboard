@@ -19,7 +19,7 @@
             </option>
           }
           @for (opt of p.enum; track opt) {
-            <option [value]="opt.label" [selected]="values()[p.name] === opt.value">
+            <option [value]="opt.value" [selected]="values()[p.name] === opt.value">
               {{ opt.label }}
             </option>
           }

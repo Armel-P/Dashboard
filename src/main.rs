@@ -102,13 +102,15 @@ async fn main() -> Result<()> {
 
     log::info!("Listening {addr}:{port}...");
 
+    let pending = web::Data::new(PendingAuths::new());
+
     let server = HttpServer::new(move || {
         App::new()
             .app_data(db.clone())
             .app_data(web::Data::new(jwt_key.clone()))
             .app_data(web::Data::new(Registry::new()))
             .app_data(web::Data::new(Client::new()))
-            .app_data(web::Data::new(PendingAuths::new()))
+            .app_data(pending.clone())
             .configure(api::configure)
             .service(
                 Files::new("/", constants::WEB_ROOT)
