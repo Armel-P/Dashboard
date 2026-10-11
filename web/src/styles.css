@@ -44,6 +44,30 @@
   --on-accent: #3c3228;
 }
 
+[data-theme="kermit"] {
+  color-scheme: light;
+  --bg-top: #b9d9a4;
+  --bg-bottom: #e3f0d8;
+  --card: #f3f7ec;
+  --text: #173d25;
+  --accent: #2e783b;
+  --accent-hover: #205d2d;
+  --error: #b63b3b;
+  --on-accent: #ffffff;
+}
+
+[data-theme="go"] {
+  color-scheme: light;
+  --bg-top: #b9b457;
+  --bg-bottom: #c9c66f;
+  --card: #d8d58c;
+  --text: #000000;
+  --accent: #434f01;
+  --accent-hover: #303900;
+  --error: #860e0e;
+  --on-accent: #ffffff;
+}
+
 body {
   margin: 0;
   min-height: 100vh;

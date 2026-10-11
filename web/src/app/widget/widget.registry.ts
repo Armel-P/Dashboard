@@ -16,7 +16,7 @@ export const FREE_WIDGET_REGISTRY: WidgetEntry[] = [
   { service: 'open_meteo', id: 'current',  component: OpenMeteoCurrent,
     w: 4, h: 3, minW: 2, minH: 3, defaultRefreshSecs: 600 },
   { service: 'open_meteo', id: 'forecast', component: OpenMeteoForecast,
-    w: 6, h: 3, minW: 2, minH: 4, defaultRefreshSecs: 3600 },
+    w: 6, h: 3, minW: 2, minH: 3, defaultRefreshSecs: 3600 },
 ];
 
 export const FREE_SERVICE_NAMES: string[] = [...new Set(FREE_WIDGET_REGISTRY.map(e => e.service))];
