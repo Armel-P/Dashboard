@@ -62,11 +62,15 @@ export class AuthService {
       );
   }
 
-  register(request: RegisterRequest): Observable<AuthResponse> {
+  register(request: RegisterRequest): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${API_BASE}/auth/register`, request);
+  }
+
+  verify(token: string): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(
-        `${API_BASE}/auth/register`,
-        request,
+        `${API_BASE}/auth/verify`,
+        { token },
         { withCredentials: true },
       )
       .pipe(

@@ -29,26 +29,37 @@
   }
 
   @if (isRegister) {
-  <label for="confirmPassword">Confirm password</label>
-  <input
-    id="confirmPassword"
-    type="password"
-    formControlName="confirmPassword"
-    autocomplete="new-password"
-  />
+    <label for="confirmPassword">Confirm password</label>
+    <input
+      id="confirmPassword"
+      type="password"
+      formControlName="confirmPassword"
+      autocomplete="new-password"
+    />
 
-  @if (
-      form.controls.confirmPassword.touched &&
-      form.controls.confirmPassword.invalid
-    ) {
-      <span class="error">Please confirm your password</span>
-    }
+    @if (
+        form.controls.confirmPassword.touched &&
+        form.controls.confirmPassword.invalid
+      ) {
+        <span class="error">Please confirm your password</span>
+      }
 
     @if (
       form.controls.confirmPassword.touched &&
       form.hasError('mismatch')
     ) {
       <span class="error">Passwords do not match</span>
+    }
+
+    @if (emailSent()) {
+      <div class="card">
+        <h2>Check your inbox</h2>
+        <p>We sent a confirmation link to {{ sentTo() }}. It expires in 5 minutes.</p>
+        <a routerLink="/login">Back to login</a>
+      </div>
+    } @else {
+      <form class="card" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      </form>
     }
   }
 

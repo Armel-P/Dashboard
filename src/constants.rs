@@ -6,6 +6,7 @@ pub const REFRESH_TOKEN_LIFETIME_DAYS: i64 = 30;
 pub const JWT_LIFETIME_DAYS: i64 = 1;
 
 pub const STATE_TTL: Duration = Duration::from_secs(600);
+pub const SIGNUP_TTL: Duration = Duration::from_secs(300);
 
 pub const COOKIE_PATH: &str = "/";
 

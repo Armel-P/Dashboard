@@ -1,4 +1,5 @@
-use actix_web::{HttpRequest, HttpResponse, Responder, delete, get, http::{StatusCode}, middleware::from_fn, post, web};
+use actix_web::{HttpRequest, HttpResponse, Responder, delete, get,
+    http::StatusCode, middleware::from_fn, post, web};
 use serde_json::Value;
 use std::time::Instant;
 use uuid::Uuid;

@@ -13,13 +13,14 @@ pub mod structs;
 pub mod constants;
 pub mod crypto;
 mod db;
+pub mod mailer;
 pub mod middleware;
 pub mod password;
 pub mod utils;
 pub mod services;
 
 use services::registery::Registry;
-use structs::oauth::PendingAuths;
+use structs::oauth::{PendingSignups, PendingAuths};
 
 pub type Result<T> = anyhow::Result<T>;
 
@@ -102,7 +103,10 @@ async fn main() -> Result<()> {
 
     log::info!("Listening {addr}:{port}...");
 
-    let pending = web::Data::new(PendingAuths::new());
+    let pending_auth = web::Data::new(PendingAuths::new());
+
+    let pending_signups = web::Data::new(PendingSignups::new());
+    let mailer_data = web::Data::new(mailer::Mailer::from_env().expect("SMTP config"));
 
     let server = HttpServer::new(move || {
         App::new()
@@ -110,7 +114,9 @@ async fn main() -> Result<()> {
             .app_data(web::Data::new(jwt_key.clone()))
             .app_data(web::Data::new(Registry::new()))
             .app_data(web::Data::new(Client::new()))
-            .app_data(pending.clone())
+            .app_data(pending_auth.clone())
+            .app_data(pending_signups.clone())
+            .app_data(mailer_data.clone())
             .configure(api::configure)
             .service(
                 Files::new("/", constants::WEB_ROOT)

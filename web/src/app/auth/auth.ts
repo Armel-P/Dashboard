@@ -37,6 +37,8 @@ export class Auth {
 
   loading = signal(false);
   errorMessage = signal('');
+  emailSent = signal(false);
+  sentTo = signal('');
 
   form = this.fb.nonNullable.group(
     {
@@ -67,14 +69,12 @@ export class Auth {
 
     if (this.isRegister) {
       this.auth
-        .register({
-          mail: email,
-          name,
-          password,
-        })
+        .register({ mail: email, name, password })
         .subscribe({
           next: () => {
-            this.router.navigate(['/dashboard']);
+            this.loading.set(false);
+            this.sentTo.set(email);
+            this.emailSent.set(true);
           },
 
           error: (error) => {

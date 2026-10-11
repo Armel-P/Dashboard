@@ -5,8 +5,15 @@ use serde_json::Value;
 use uuid::Uuid;
 use dashmap::DashMap;
 
-pub type PendingAuths = DashMap<String, PendingAuth>;
+pub type PendingSignups = DashMap<String, PendingSignup>;
+pub struct PendingSignup {
+    pub mail: String,
+    pub name: String,
+    pub password_hash: String,
+    pub created_at: Instant,
+}
 
+pub type PendingAuths = DashMap<String, PendingAuth>;
 pub struct PendingAuth {
     pub user_id: Uuid,
     pub service: String,

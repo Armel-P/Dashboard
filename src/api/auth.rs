@@ -1,25 +1,29 @@
-use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder, http::StatusCode,
-    middleware::from_fn, post, web};
+use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder, http::{StatusCode, header},
+    middleware::from_fn, post, get, web};
 use uuid::Uuid;
-use chrono::{Utc};
-use jsonwebtoken::{EncodingKey};
+use chrono::Utc;
+use std::time::Instant;
+use jsonwebtoken::EncodingKey;
 use diesel::result::{DatabaseErrorKind, Error};
 
 use crate::{
     db::DbPool,
-    constants::{REFRESH_TOKEN_LIFETIME_DAYS},
+    mailer::Mailer,
+    constants::{REFRESH_TOKEN_LIFETIME_DAYS, SIGNUP_TTL, API_URL, FRONT_URL},
     password::{gen_token, hash_token, hash_password, verify_password, gen_jwt},
     structs::{
         db::{User},
-        requests::{MessageResponse, UserInfo, RegisterRequest, RegisterResponse,
-                   LoginRequest, LoginResponse, JwtResponse, DisconnectResponse}
+        requests::{MessageResponse, UserInfo, RegisterRequest, VerifyRequest,
+                   LoginRequest, LoginResponse, JwtResponse, DisconnectResponse},
+        oauth::{PendingSignups, PendingSignup}
         },
     middleware::{jwt_auth},
     queries::{
         users::{insert_user, find_user_by_id, find_user_by_mail},
         refresh_tokens::{insert_refresh_token, delete_refresh_token, find_refresh_token}
     },
-    utils::{http_err, build_refresh_token_cookie, remove_refresh_token_cookie}
+    utils::{http_err, build_refresh_token_cookie, remove_refresh_token_cookie},
+    services::oauth::random_string
 };
 
 #[utoipa::path(
@@ -27,7 +31,7 @@ use crate::{
     path = "/api/auth/register",
     request_body = RegisterRequest,
     responses(
-        (status = 201, description = "Successfully registered", content_type = "application/json", body = RegisterResponse),
+        (status = 202, description = "Check inbox", content_type = "application/json", body = MessageResponse),
         (status = 409, description = "Email already in use", content_type = "application/json", body = MessageResponse),
         (status = 500, description = "Internal server error", content_type = "application/json", body = MessageResponse)
     )
@@ -35,12 +39,19 @@ use crate::{
 #[post("/register")]
 pub async fn register(
     body: web::Json<RegisterRequest>,
+    pending: web::Data<PendingSignups>,
+    mailer: web::Data<Mailer>,
     db: web::Data<DbPool>,
-    secret: web::Data<Vec<u8>>,
 ) -> impl Responder {
     let mut conn = match db.get().await {
         Ok(conn) => conn,
         Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to connect to database"),
+    };
+
+    match find_user_by_mail(&mut conn, body.mail.clone()).await {
+        Ok(Some(_)) => return http_err(StatusCode::CONFLICT, "An account with this email already exists"),
+        Ok(None) => {},
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
     };
 
     let password_hash = match hash_password(&body.password) {
@@ -48,12 +59,59 @@ pub async fn register(
         Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Fail to hash password")
     };
 
-    let user = match insert_user(&mut conn, body.mail.clone(), body.name.clone(), password_hash)
-    .await {
-        Ok(id) => id,
-            Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, info))
-                if info.constraint_name() == Some("users_mail_key") =>
-                    return http_err(StatusCode::CONFLICT, "An account with this email already exists"),
+    let token = random_string(32);
+
+    pending.retain(|_, v| v.created_at.elapsed() < SIGNUP_TTL);
+    pending.insert(token.clone(), PendingSignup {
+        mail: body.mail.clone(),
+        name: body.name.clone(),
+        password_hash,
+        created_at: Instant::now(),
+    });
+
+    if mailer.send_verification(&body.mail, &format!("{API_URL}/auth/verify?token={token}")).await.is_err() {
+        pending.remove(&token);
+        return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to send mail");
+    }
+
+    HttpResponse::Accepted().json(MessageResponse { message: "Check your inbox".into() })
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/auth/verify",
+    request_body = RegisterRequest,
+    responses(
+        (status = 302, description = "Successfully registered"),
+        (status = 400, description = "Bad request", content_type = "application/json", body = MessageResponse),
+        (status = 409, description = "Email already in use", content_type = "application/json", body = MessageResponse),
+        (status = 500, description = "Internal server error", content_type = "application/json", body = MessageResponse)
+    )
+)]
+#[get("/verify")]
+pub async fn verify(
+    query: web::Query<VerifyRequest>,
+    db: web::Data<DbPool>,
+    pending: web::Data<PendingSignups>,
+) -> impl Responder {
+    let Some((_, p)) = pending.remove(&query.token) else {
+        return http_err(StatusCode::BAD_REQUEST, "Invalid or expired link");
+    };
+
+    if p.created_at.elapsed() > SIGNUP_TTL {
+        return http_err(StatusCode::BAD_REQUEST, "Invalid or expired link");
+    }
+
+    let mut conn = match db.get().await {
+        Ok(conn) => conn,
+        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to connect to database"),
+    };
+
+    let user = match insert_user(&mut conn, p.mail.clone(), p.name.clone(), p.password_hash).await {
+        Ok(user) => user,
+        Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, info))
+            if info.constraint_name() == Some("users_mail_key") =>
+                return http_err(StatusCode::CONFLICT, "An account with this email already exists"),
         Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to create account"),
     };
 
@@ -64,21 +122,10 @@ pub async fn register(
         Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to store refresh token")
     };
 
-    let jwt = match gen_jwt(refresh_token.id.to_string(), &EncodingKey::from_secret(secret.as_ref())) {
-        Ok(token) => token,
-        Err(_) => return http_err(StatusCode::INTERNAL_SERVER_ERROR, "Failed to generate JWT")
-    };
-
-    HttpResponse::Created()
+    HttpResponse::Found()
+        .insert_header((header::LOCATION, format!("{FRONT_URL}/dashboard")))
         .cookie(build_refresh_token_cookie(refresh_token.id, token))
-        .json(RegisterResponse {
-        access_token: jwt,
-        user: UserInfo {
-            id: user.id,
-            mail: body.mail.clone(),
-            name: body.name.clone(),
-        },
-    })
+        .finish()
 }
 
 #[utoipa::path(
@@ -250,6 +297,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/auth")
         .service(register)
+        .service(verify)
         .service(login)
         .service(get_jwt)
         .service(

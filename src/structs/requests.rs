@@ -26,7 +26,11 @@ pub struct RegisterRequest {
     pub name: String,
     pub password: String,
 }
-pub type RegisterResponse = TokenResponse;
+
+#[derive(Deserialize, ToSchema)]
+pub struct VerifyRequest {
+    pub token: String,
+}
 
 #[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {

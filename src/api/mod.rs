@@ -30,19 +30,21 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[openapi(
     paths(
         about::about_json,
-        auth::register, auth::login, auth::get_jwt, auth::disconnect,
+        auth::register, auth::verify, auth::login, auth::get_jwt, auth::disconnect,
         health::health,
-        user::delete, user::update_map
+        user::delete, user::update_map, user::get_map,
+        widget::connect_service, widget::connect_callback, widget::is_connected, widget::disconnect_service,
+        widget::get_catalog, widget::get_widget, widget::get_catalog_free, widget::get_widget_free
     ),
     components(
         schemas(
             db::User, db::RefreshToken,
             requests::MessageResponse, requests::UserInfo,
-            requests::RegisterRequest, requests::RegisterResponse,
+            requests::RegisterRequest, requests::VerifyRequest,
             requests::LoginRequest, requests::LoginResponse,
             requests::JwtResponse, requests::DisconnectResponse,
             requests::DeleteResponse,
-            requests::UpdateMapRequest, requests::UpdateMapResponse
+            requests::UpdateMapRequest, requests::UpdateMapResponse,
         )
     )
 )]

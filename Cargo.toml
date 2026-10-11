@@ -31,6 +31,9 @@ diesel = { version = "2", features = ["postgres_backend", "chrono", "uuid", "ser
 diesel-async = { version = "0.7", features = ["postgres", "deadpool", "async-connection-wrapper"] }
 diesel_migrations = "2"
 
+# Mail
+lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1"] }
+
 # Web
 actix = "0.13"
 actix-files = "0.7.0"
